@@ -16,7 +16,11 @@ class StorageManager:
         """获取图片存储的基础目录"""
         if not self.picture_dir:
             self.picture_dir = current_app.config.get('PICTURE_DIR', 'picture')
+            # 确保使用绝对路径，但不重复添加/app前缀
+            if not os.path.isabs(self.picture_dir):
+                self.picture_dir = os.path.abspath(self.picture_dir)
             os.makedirs(self.picture_dir, exist_ok=True)
+            current_app.logger.debug(f"图片存储基础目录: {self.picture_dir}")
         return self.picture_dir
     
     def get_all_collections(self):
@@ -91,7 +95,7 @@ class StorageManager:
         images = []
         
         # 常见图片扩展名
-        image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']
+        image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'psd', 'tif']
         
         for ext in image_extensions:
             pattern = os.path.join(collection_path, f'*.{ext}')

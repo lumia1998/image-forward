@@ -107,24 +107,72 @@ def upload_image(collection_name):
         abort(404)
     
     # 检查是否有文件上传
-    if 'image' not in request.files:
+    if 'images[]' not in request.files:
         flash('没有上传文件！', 'danger')
         return redirect(url_for('admin.manage_collection', collection_name=collection_name))
     
-    file = request.files['image']
+    files = request.files.getlist('images[]')
     
-    # 检查文件名是否为空
-    if file.filename == '':
+    # 检查是否有选择文件
+    if len(files) == 0 or all(file.filename == '' for file in files):
         flash('没有选择文件！', 'danger')
         return redirect(url_for('admin.manage_collection', collection_name=collection_name))
     
     # 上传文件
-    filename = storage_manager.add_image_to_collection(collection_name, file)
+    success_count = 0
+    failed_count = 0
+    errors = []
     
-    if filename:
-        flash(f'图片 "{filename}" 上传成功！', 'success')
-    else:
-        flash('图片上传失败！', 'danger')
+    # 支持的图片格式
+    allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'psd', 'tif']
+    
+    for file in files:
+        if file.filename != '':
+            # 检查文件类型
+            filename = file.filename.lower()
+            ext = filename.rsplit('.', 1)[1] if '.' in filename else ''
+            
+            if ext not in allowed_extensions:
+                failed_count += 1
+                errors.append(f"不支持的文件类型: {filename}")
+                current_app.logger.warning(f"文件类型不支持: {filename}")
+                continue
+            
+            # 检查文件大小
+            if len(file.read()) > current_app.config.get('MAX_CONTENT_LENGTH', 20 * 1024 * 1024):
+                file.seek(0)  # 重置文件指针
+                failed_count += 1
+                errors.append(f"文件过大: {filename}，最大允许20MB")
+                current_app.logger.warning(f"文件过大: {filename}")
+                continue
+                
+            file.seek(0)  # 重置文件指针，确保能正确读取文件内容
+            # 尝试保存文件
+            try:
+                saved_filename = storage_manager.add_image_to_collection(collection_name, file)
+                if saved_filename:
+                    success_count += 1
+                    current_app.logger.info(f"成功上传文件: {saved_filename} 到合集 {collection_name}")
+                else:
+                    failed_count += 1
+                    errors.append(f"文件 {filename} 保存失败")
+                    current_app.logger.error(f"文件保存失败: {filename}")
+            except Exception as e:
+                failed_count += 1
+                errors.append(f"文件 {filename} 上传出错: {str(e)}")
+                current_app.logger.error(f"文件上传异常: {filename}, 错误: {str(e)}")
+    
+    # 显示上传结果
+    if success_count > 0:
+        flash(f'成功上传 {success_count} 张图片！', 'success')
+    
+    if failed_count > 0:
+        for error in errors:
+            flash(error, 'warning')
+        flash(f'有 {failed_count} 张图片上传失败！', 'warning')
+    
+    if success_count == 0 and failed_count == 0:
+        flash('没有有效的图片被上传！', 'warning')
     
     return redirect(url_for('admin.manage_collection', collection_name=collection_name))
 

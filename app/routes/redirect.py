@@ -1,5 +1,6 @@
-from flask import Blueprint, send_file, redirect, abort
+from flask import Blueprint, send_file, redirect, abort, current_app
 from app.storage import storage_manager
+import os
 
 redirect_bp = Blueprint('redirect', __name__)
 
@@ -22,8 +23,17 @@ def random_redirect(collection_name):
     
     # 根据资源类型处理请求
     if resource_type == 'local':
+        # 检查文件是否存在，提供更清晰的错误信息
+        if not os.path.exists(resource_path):
+            current_app.logger.error(f"文件不存在: {resource_path}")
+            abort(404, description=f"图片文件不存在: {os.path.basename(resource_path)}")
+        
         # 本地图片：直接返回文件
-        return send_file(resource_path)
+        try:
+            return send_file(resource_path)
+        except Exception as e:
+            current_app.logger.error(f"发送文件错误: {str(e)}")
+            abort(500, description=f"无法加载图片: {os.path.basename(resource_path)}")
     elif resource_type == 'external':
         # 外部链接：通过HTTP重定向
         return redirect(resource_path)
