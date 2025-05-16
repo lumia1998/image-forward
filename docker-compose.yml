@@ -11,4 +11,5 @@ services:
     environment:
       - SECRET_KEY=admin
       - ADMIN_PASSWORD=admin
-    restart: unless-stopped    
+    restart: unless-stopped
+    command: python app.py  # 显式指定使用Python运行应用

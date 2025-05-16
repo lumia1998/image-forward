@@ -293,4 +293,4 @@ def preview_image(collection, filename):
     return send_from_directory(os.path.join(app.config['UPLOAD_FOLDER'], collection), filename)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=46000, debug=True)    
+    app.run(host='0.0.0.0', port=46000, debug=True)

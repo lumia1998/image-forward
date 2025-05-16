@@ -20,5 +20,5 @@ EXPOSE 46000
 # 创建图片存储目录
 VOLUME /app/picture
 
-# 运行应用
-CMD ["flask", "run", "--host=0.0.0.0", "--port=46000"]    
+# 直接使用Python运行应用
+CMD ["python", "app.py"]
