@@ -1,0 +1,36 @@
+# Python生成的文件
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 虚拟环境
+venv/
+ENV/
+
+# 上传的图片文件
+picture/*
+!picture/.gitkeep
+
+# 本地配置
+.env
+
+# 系统文件
+.DS_Store
+Thumbs.db

@@ -1,15 +1,15 @@
 version: '3'
 
 services:
-  image-forward:
+  web:
     build: .
     container_name: image-forward
     ports:
       - "46000:46000"
     volumes:
       - ./picture:/app/picture
-    environment:
-      - SECRET_KEY=admin
-      - ADMIN_PASSWORD=admin
+      - ./.env:/app/.env
     restart: unless-stopped
-    command: python app.py  # 显式指定使用Python运行应用
+    environment:
+      - HOST=0.0.0.0
+      - PORT=46000

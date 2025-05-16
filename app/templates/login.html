@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}图床转发 - 管理登录{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="card mt-5">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">管理员登录</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('admin.login_page') }}">
+                        <div class="mb-3">
+                            <label for="password" class="form-label">管理密码</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                            <div class="form-text">请输入在.env文件中设置的管理密码</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">登录</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

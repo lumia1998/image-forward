@@ -1,24 +1,24 @@
-# 使用Python 3.9作为基础镜像
 FROM python:3.9-slim
 
-# 设置工作目录
 WORKDIR /app
 
-# 复制项目文件
-COPY . /app
-
-# 安装依赖
+# 复制依赖文件并安装
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# 复制应用代码
+COPY . .
+
+# 创建图片存储目录
+RUN mkdir -p /app/picture
+
 # 设置环境变量
-ENV FLASK_APP=app.py
+ENV FLASK_APP=run.py
 ENV FLASK_ENV=production
+ENV PYTHONUNBUFFERED=1
 
 # 暴露端口
 EXPOSE 46000
 
-# 创建图片存储目录
-VOLUME /app/picture
-
-# 直接使用Python运行应用
-CMD ["python", "app.py"]
+# 启动命令
+CMD ["python", "run.py"]

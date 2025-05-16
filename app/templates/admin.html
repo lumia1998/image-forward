@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}图床转发 - 管理面板{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- 侧边栏：合集列表 -->
+        <div class="col-md-3 col-lg-2 sidebar py-3">
+            <h5>合集列表</h5>
+            <hr>
+            {% if collections %}
+            <div class="list-group mb-4">
+                {% for collection in collections %}
+                <a href="{{ url_for('admin.manage_collection', collection_name=collection) }}" class="list-group-item list-group-item-action">
+                    {{ collection }}
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <p>还没有创建任何图片合集</p>
+            </div>
+            {% endif %}
+
+            <h5>创建新合集</h5>
+            <form method="post" action="{{ url_for('admin.create_collection') }}" class="mb-3">
+                <div class="mb-3">
+                    <label for="collection_name" class="form-label">合集名称</label>
+                    <input type="text" class="form-control" id="collection_name" name="collection_name" required placeholder="输入合集名称">
+                    <div class="form-text">只能包含字母、数字和下划线</div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">创建合集</button>
+            </form>
+        </div>
+
+        <!-- 主内容区 -->
+        <div class="col-md-9 col-lg-10 py-3">
+            <h1>图床转发管理面板</h1>
+            <p class="lead">选择左侧的合集进行管理，或创建新的合集</p>
+
+            <!-- 快速说明 -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">使用说明</h5>
+                </div>
+                <div class="card-body">
+                    <h5>1. 合集管理</h5>
+                    <ul>
+                        <li>在左侧创建新的图片合集</li>
+                        <li>点击合集名称进入管理页面</li>
+                    </ul>
+
+                    <h5>2. 图片管理</h5>
+                    <ul>
+                        <li>在合集管理页面上传本地图片</li>
+                        <li>添加外部图片链接</li>
+                        <li>预览和删除已有图片</li>
+                    </ul>
+
+                    <h5>3. 随机转发</h5>
+                    <ul>
+                        <li>通过 <code>http://域名/合集名称</code> 随机获取合集中的一张图片</li>
+                        <li>外部链接会通过HTTP重定向的方式转发</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

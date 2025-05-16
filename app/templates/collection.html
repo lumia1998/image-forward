@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}图床转发 - {{ collection_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>合集: {{ collection_name }}</h1>
+            <p class="lead">
+                随机获取图片: <code>{{ request.host_url }}{{ collection_name }}</code>
+                <a href="{{ request.host_url }}{{ collection_name }}" target="_blank" class="btn btn-sm btn-outline-primary ms-2">测试</a>
+            </p>
+            <a href="{{ url_for('main.index') }}" class="btn btn-secondary mb-3">返回首页</a>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col">
+            <h2>图片列表 ({{ images|length }}张)</h2>
+        </div>
+    </div>
+
+    {% if images %}
+    <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4 mb-5">
+        {% for image_url in images %}
+        <div class="col">
+            <div class="card image-card">
+                <div class="image-container">
+                    <img src="{{ image_url }}" class="image-preview" alt="图片预览">
+                </div>
+                <div class="card-body">
+                    <a href="{{ image_url }}" target="_blank" class="btn btn-sm btn-primary">查看原图</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info mb-4">
+        <p>该合集中还没有图片。</p>
+    </div>
+    {% endif %}
+
+    <div class="row mb-4">
+        <div class="col">
+            <h2>外链列表 ({{ links|length }}个)</h2>
+        </div>
+    </div>
+
+    {% if links %}
+    <div class="list-group mb-5">
+        {% for link in links %}
+        <div class="list-group-item list-group-item-action">
+            <div class="d-flex w-100 justify-content-between align-items-center">
+                <div class="text-truncate me-3">{{ link }}</div>
+                <a href="{{ link }}" target="_blank" class="btn btn-sm btn-primary">打开链接</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info mb-4">
+        <p>该合集中还没有外链。</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

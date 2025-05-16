@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}图床转发 - 首页{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>图片合集</h1>
+            <p class="lead">选择一个合集查看其中的图片</p>
+        </div>
+    </div>
+
+    {% if collections %}
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for collection in collections %}
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">{{ collection }}</h5>
+                    <p class="card-text">随机获取图片: <code>{{ request.host_url }}{{ collection }}</code></p>
+                </div>
+                <div class="card-footer">
+                    <a href="{{ url_for('main.view_collection', collection_name=collection) }}" class="btn btn-primary">查看合集</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <p>还没有创建任何图片合集。请前往<a href="{{ url_for('admin.login_page') }}">管理页面</a>创建一个合集。</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
