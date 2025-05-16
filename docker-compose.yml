@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  image-forward:
+    build: .
+    container_name: image-forward
+    ports:
+      - "46000:46000"
+    volumes:
+      - ./picture:/app/picture
+    environment:
+      - SECRET_KEY=admin
+      - ADMIN_PASSWORD=admin
+    restart: unless-stopped    
