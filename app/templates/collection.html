@@ -22,17 +22,17 @@
     </div>
 
     {% if images %}
-    <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4 mb-5">
+    <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 row-cols-xl-6 g-2 mb-5 album-grid"> {# 调整列数和间距，添加 album-grid 类 #}
         {% for image_url in images %}
         <div class="col">
-            <div class="card image-card">
-                <div class="image-container">
-                    <img src="{{ image_url }}" class="image-preview" alt="图片预览">
-                </div>
-                <div class="card-body">
-                    <a href="{{ image_url }}" target="_blank" class="btn btn-sm btn-primary">查看原图</a>
-                </div>
-            </div>
+            <a href="{{ image_url }}"
+               data-bs-toggle="modal"
+               data-bs-target="#lightboxModal"
+               data-lightbox-src="{{ image_url }}"
+               data-lightbox-alt="图片 {{ loop.index }} / {{ images|length }}"
+               class="album-thumbnail-link">
+                <img src="{{ image_url }}" class="img-fluid album-thumbnail" alt="图片预览 {{ loop.index }}">
+            </a>
         </div>
         {% endfor %}
     </div>
@@ -42,6 +42,8 @@
     </div>
     {% endif %}
 
+    {# 外链列表暂时注释掉，根据计划弱化处理 #}
+    {#
     <div class="row mb-4">
         <div class="col">
             <h2>外链列表 ({{ links|length }}个)</h2>
@@ -64,5 +66,32 @@
         <p>该合集中还没有外链。</p>
     </div>
     {% endif %}
+    #}
+
+    <!-- Lightbox Modal -->
+    <div class="modal fade" id="lightboxModal" tabindex="-1" aria-labelledby="lightboxModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="lightboxModalLabel">图片预览</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img src="" id="lightboxImage" class="img-fluid" alt="Lightbox图片">
+                </div>
+                <div class="modal-footer">
+                    {# Lightbox 操作按钮，例如下载、复制链接等，后续通过JS填充和控制 #}
+                    <a href="#" id="lightboxDownload" class="btn btn-primary" download>下载原图</a>
+                    <button type="button" id="lightboxCopyLink" class="btn btn-secondary">复制链接</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/lightbox.js') }}"></script>
+{% endblock %}
+
 {% endblock %}

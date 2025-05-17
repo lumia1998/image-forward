@@ -125,6 +125,53 @@ class StorageManager:
         
         with open(links_file, 'r', encoding='utf-8') as f:
             return [line.strip() for line in f if line.strip()]
+
+    def get_collection_cover_image_filename(self, collection_name):
+        """获取合集的封面图片文件名（最新上传的图片）
+
+        Args:
+            collection_name: 合集名称
+
+        Returns:
+            str: 最新图片的相对文件名，如果合集为空或不存在则返回 None
+        """
+        if not self.collection_exists(collection_name):
+            current_app.logger.debug(f"合集 '{collection_name}' 不存在，无法获取封面。")
+            return None
+
+        image_filenames = self.get_collection_images(collection_name)
+        if not image_filenames:
+            current_app.logger.debug(f"合集 '{collection_name}' 为空，无法获取封面。")
+            return None
+
+        collection_path = os.path.join(self.base_dir, collection_name)
+        
+        images_with_mtime = []
+        for filename in image_filenames:
+            full_path = os.path.join(collection_path, filename)
+            try:
+                if os.path.exists(full_path):
+                    mtime = os.path.getmtime(full_path)
+                    images_with_mtime.append((mtime, filename))
+                else:
+                    current_app.logger.warning(f"获取封面时文件未找到 (可能在glob后被删除): {full_path}")
+            except FileNotFoundError:
+                current_app.logger.warning(f"获取封面时文件未找到 (FileNotFoundError): {full_path}")
+                continue
+            except Exception as e:
+                current_app.logger.error(f"获取文件 '{full_path}' 修改时间时出错: {e}")
+                continue
+        
+        if not images_with_mtime:
+            current_app.logger.debug(f"合集 '{collection_name}' 中没有有效的图片文件来确定封面。")
+            return None
+
+        # 按修改时间降序排序，最新的在最前面
+        images_with_mtime.sort(key=lambda item: item[0], reverse=True)
+        
+        latest_image_filename = images_with_mtime[0][1]
+        current_app.logger.debug(f"合集 '{collection_name}' 的封面图片为: {latest_image_filename}")
+        return latest_image_filename
     
     def add_image_to_collection(self, collection_name, image_file):
         """添加图片到合集

@@ -7,8 +7,20 @@ main_bp = Blueprint('main', __name__)
 @main_bp.route('/')
 def index():
     """主页：显示所有图片合集"""
-    collections = storage_manager.get_all_collections()
-    return render_template('index.html', collections=collections)
+    all_collection_names = storage_manager.get_all_collections()
+    collections_with_covers = []
+    for name in all_collection_names:
+        cover_filename = storage_manager.get_collection_cover_image_filename(name)
+        cover_url = None
+        if cover_filename:
+            # 注意：这里的 URL 构造方式需要与 serve_picture 路由匹配
+            # serve_picture 期望的 filename 是 'collection_name/image_filename.ext'
+            cover_url = f'/picture/{name}/{cover_filename}'
+        collections_with_covers.append({
+            'name': name,
+            'cover_url': cover_url
+        })
+    return render_template('index.html', collections=collections_with_covers)
 
 @main_bp.route('/view/<collection_name>')
 def view_collection(collection_name):

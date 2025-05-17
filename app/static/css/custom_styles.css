@@ -1,0 +1,76 @@
+.folder-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    border: 1px solid #e0e0e0; /* 轻微的边框 */
+}
+
+.folder-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.folder-icon-wrapper {
+    width: 80px; /* 根据图标和封面调整 */
+    height: 80px; /* 根据图标和封面调整 */
+    position: relative; /* 用于定位封面图片 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden; /* 确保封面图片不超出范围 */
+    border-radius: 4px; /* 轻微圆角 */
+}
+
+.folder-icon-wrapper .bi-folder-fill { /* 针对Bootstrap图标的大小 */
+    font-size: 4rem; /* 调整图标大小 */
+}
+
+.folder-cover-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 确保图片覆盖整个区域且不变形 */
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.card-title.fs-6 { /* 确保标题在小卡片上也能良好显示 */
+    line-height: 1.2;
+}
+/* Collection Page Album Grid Styles */
+.album-grid .col {
+    padding: 0.25rem; /* 更紧凑的间距 */
+}
+
+.album-thumbnail-link {
+    display: block;
+    overflow: hidden;
+    border-radius: 0.25rem; /* 轻微圆角 */
+    background-color: #f8f9fa; /* 缩略图背景色 */
+    aspect-ratio: 1 / 1; /* 使缩略图容器保持正方形 */
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.album-thumbnail-link:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.album-thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 裁剪并覆盖整个区域 */
+}
+
+/* Lightbox Modal Customizations (Optional, Bootstrap defaults are usually fine) */
+#lightboxModal .modal-lg {
+    max-width: 80%; /* Lightbox 可以更宽一些 */
+}
+
+#lightboxModal .modal-body {
+    padding: 0.5rem; /* 减少内边距，让图片更大 */
+}
+
+#lightboxImage {
+    max-height: calc(100vh - 200px); /* 限制图片最大高度，防止超出视口 */
+    display: block;
+    margin: auto;
+}
