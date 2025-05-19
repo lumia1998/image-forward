@@ -44,7 +44,8 @@ def logout_action():
 @login_required
 def update_settings():
     """更新个性化设置"""
-    dotenv_path = find_dotenv() 
+    # dotenv_path = find_dotenv() # 改为更明确的路径
+    dotenv_path = os.path.join(current_app.root_path, '.env')
     settings_changed = False
 
     new_app_name = request.form.get('app_name')
