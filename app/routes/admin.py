@@ -220,7 +220,7 @@ def upload_image(collection_name):
             file.seek(0) # 重置指针以供保存
             try:
                 # storage_manager.add_image_to_collection 应该使用原始文件名或安全处理后的文件名
-                saved_filename = storage_manager.add_image_to_collection(collection_name, file, original_filename)
+                saved_filename = storage_manager.add_image_to_collection(collection_name, file)
                 if saved_filename:
                     success_count += 1
                     current_app.logger.info(f"成功上传文件: {saved_filename} 到合集 {collection_name}")
