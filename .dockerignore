@@ -1,0 +1,15 @@
+.git
+.vscode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+*.log
+docker-compose.yml
+Dockerfile
+README.md
+# 其他不需要包含在镜像中的文件或目录
