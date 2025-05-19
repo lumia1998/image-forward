@@ -19,7 +19,7 @@ body::before {
     top: 0;
     bottom: 0;
     z-index: -1; /* Ensure it's behind all other page content */
-    
+
     background-image: url("{{ url_for('main.serve_project_background', filename=background_image_filename) }}");
     background-size: cover; /* Cover the entire area */
     background-attachment: fixed; /* Background stays fixed during scroll */
@@ -44,7 +44,7 @@ body::before {
                         <div class="mb-3">
                             <label for="password" class="form-label">管理密码</label>
                             <input type="password" class="form-control" id="password" name="password" required>
-                            <div class="form-text">请输入在.env文件中设置的管理密码</div>
+                            <div class="form-text">请输入在您的配置文件 (`.env` 或 `config.py`) 中设置的管理密码</div>
                         </div>
                         <button type="submit" class="btn btn-primary w-100">登录</button>
                     </form>

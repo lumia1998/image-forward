@@ -10,10 +10,12 @@ services:
       - .env # 从 .env 文件加载环境变量
     volumes:
       - ./picture:/app/picture # 将主机的 ./picture 目录挂载到容器的 /app/picture 目录
-      - ./background:/app/background # 将主机的 ./background 目录挂载到容器的 /app/background 目录
+      - ./app/background:/app/background # 将主机的 ./app/background 目录挂载到容器的 /app/background 目录
+      # To use a custom config.py, uncomment the line below and ensure
+      # 'my_custom_config.py' (or your chosen name) exists in the same directory as this docker-compose.yml
+      # - ./my_custom_config.py:/app/config.py
       # 如果有其他需要持久化的数据目录，也可以在这里添加
     restart: unless-stopped # 容器退出时自动重启，除非手动停止
 
-volumes:
-  picture_data: # 定义一个名为 picture_data 的卷，如果上面用的是这个卷，这里就需要定义
-
+# volumes:
+#   picture_data: # 定义一个名为 picture_data 的卷，如果上面用的是这个卷，这里就需要定义

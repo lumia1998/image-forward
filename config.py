@@ -7,19 +7,19 @@ load_dotenv()
 # 基础配置
 class Config:
     # 应用配置
-    SECRET_KEY = os.getenv('SECRET_KEY', 'dev_secret_key')
-    DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', 'yes', '1')
-    APP_NAME = os.getenv('APP_NAME', '图床管理')
+    SECRET_KEY = os.getenv('SECRET_KEY', 'config_default_secret_key') # 更新默认值
+    DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 'yes') # 更新默认值和逻辑
+    APP_NAME = os.getenv('APP_NAME', '图床管理 (Config Default)') # 更新默认值
     BACKGROUND_IMAGE_PATH = os.getenv('BACKGROUND_IMAGE_PATH', 'default_background.jpg') # 统一背景图片
     BACKGROUND_OPACITY = float(os.getenv('BACKGROUND_OPACITY', '1.0')) # 背景透明度，默认为1.0（不透明）
-    
+
     # 服务器配置
     HOST = os.getenv('HOST', '0.0.0.0')
     PORT = int(os.getenv('PORT', 46000))
-    
+
     # 管理员配置
-    ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin')
-    
+    ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'config_default_admin_pass') # 更新默认值
+
     # 存储配置
     PICTURE_DIR = os.getenv('PICTURE_DIR', 'picture')
     MAX_CONTENT_LENGTH = 20 * 1024 * 1024  # 最大上传文件大小：20MB

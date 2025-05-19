@@ -19,7 +19,7 @@ body::before {
     top: 0;
     bottom: 0;
     z-index: -1; /* Ensure it's behind all other page content */
-    
+
     background-image: url("{{ url_for('main.serve_project_background', filename=background_image_filename) }}");
     background-size: cover; /* Cover the entire area */
     background-attachment: fixed; /* Background stays fixed during scroll */
@@ -45,7 +45,7 @@ body::before {
                 </div>
                 <button type="submit" class="btn btn-primary w-100">创建合集</button>
             </form>
-            
+
             <!-- 使用说明 (从右侧移动过来) -->
             <div class="card mt-4">
                 <div class="card-header">
@@ -80,7 +80,7 @@ body::before {
                 </div>
                 <div class="card-body">
                     <form method="post" action="{{ url_for('admin.update_settings') }}" enctype="multipart/form-data">
-                        
+
                         <!-- 应用名称 -->
                         <div class="mb-3">
                             <label for="app_name" class="form-label">应用名称</label>
@@ -89,23 +89,13 @@ body::before {
                         </div>
                         <hr>
 
-                        <!-- 登录页背景 -->
+                        <!-- 全局背景图片 -->
                         <div class="mb-3">
-                            <label for="login_background_image" class="form-label">登录页背景图片 (16:9 推荐)</label>
-                            <input type="file" class="form-control" id="login_background_image" name="login_background_image" accept="image/jpeg,image/png,image/gif,image/webp">
-                            <div class="form-text">当前: {{ config.get('BACKGROUND_LOGIN_IMAGE_PATH', 'default_login.jpg') }}. 上传新图片将覆盖旧图片。</div>
-                            {% if config.get('BACKGROUND_LOGIN_IMAGE_PATH') and config.get('BACKGROUND_LOGIN_IMAGE_PATH') != 'default_login.jpg' %}
-                                <img src="{{ url_for('main.serve_project_background', filename=config.get('BACKGROUND_LOGIN_IMAGE_PATH')) }}" alt="登录页背景预览" class="img-thumbnail mt-2" style="max-width: 200px; max-height: 112px;">
-                            {% endif %}
-                        </div>
-
-                        <!-- 管理页背景 -->
-                        <div class="mb-3">
-                            <label for="admin_background_image" class="form-label">管理页背景图片 (16:9 推荐)</label>
-                            <input type="file" class="form-control" id="admin_background_image" name="admin_background_image" accept="image/jpeg,image/png,image/gif,image/webp">
-                            <div class="form-text">当前: {{ config.get('BACKGROUND_ADMIN_IMAGE_PATH', 'default_admin.jpg') }}. 上传新图片将覆盖旧图片。</div>
-                             {% if config.get('BACKGROUND_ADMIN_IMAGE_PATH') and config.get('BACKGROUND_ADMIN_IMAGE_PATH') != 'default_admin.jpg' %}
-                                <img src="{{ url_for('main.serve_project_background', filename=config.get('BACKGROUND_ADMIN_IMAGE_PATH')) }}" alt="管理页背景预览" class="img-thumbnail mt-2" style="max-width: 200px; max-height: 112px;">
+                            <label for="background_image" class="form-label">全局背景图片 (16:9 推荐)</label>
+                            <input type="file" class="form-control" id="background_image" name="background_image" accept="image/jpeg,image/png,image/gif,image/webp">
+                            <div class="form-text">当前: {{ config.get('BACKGROUND_IMAGE_PATH', 'default_background.jpg') }}. 上传新图片将覆盖旧图片（仅当前会话有效）。</div>
+                            {% if config.get('BACKGROUND_IMAGE_PATH') and config.get('BACKGROUND_IMAGE_PATH') != 'default_background.jpg' %}
+                                <img src="{{ url_for('main.serve_project_background', filename=config.get('BACKGROUND_IMAGE_PATH')) }}" alt="当前背景预览" class="img-thumbnail mt-2" style="max-width: 200px; max-height: 112px;">
                             {% endif %}
                         </div>
                         <hr>
@@ -119,7 +109,7 @@ body::before {
                             </div>
                             <div class="form-text">范围 0.1 (更透明) 到 1.0 (不透明)。实际效果依赖于Windows 11风格的具体实现。</div>
                         </div>
-                        
+
                         <button type="submit" class="btn btn-primary w-100">保存设置</button> {# Added w-100 for better fit in sidebar #}
                     </form>
                 </div>
@@ -130,7 +120,7 @@ body::before {
         <div class="col-md-9 col-lg-10 py-3">
             <h1>{{ config.APP_NAME }}管理面板</h1>
             <!-- <p class="lead">选择左侧的合集进行管理，或创建新的合集</p> --> {/* 引导语移除或修改 */}
-            
+
             <!-- 个性化设置卡片已移至侧边栏 -->
 
             <!-- 合集卡片展示区 -->
@@ -169,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (opacitySlider && opacityValueSpan) {
         // Set initial value display correctly formatted
         opacityValueSpan.textContent = parseFloat(opacitySlider.value).toFixed(2);
-        
+
         opacitySlider.oninput = function() {
             opacityValueSpan.textContent = parseFloat(this.value).toFixed(2);
         }
