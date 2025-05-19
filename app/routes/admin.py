@@ -12,7 +12,7 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 def index():
     """管理页：显示所有图片合集"""
     collections = storage_manager.get_all_collections()
-    background_image_filename = current_app.config.get('BACKGROUND_ADMIN_IMAGE_PATH')
+    background_image_filename = current_app.config.get('BACKGROUND_IMAGE_PATH')
     background_opacity = current_app.config.get('BACKGROUND_OPACITY')
     return render_template('admin.html',
                            collections=collections,
@@ -28,7 +28,7 @@ def login_page():
             return redirect(url_for('admin.index'))
         else:
             flash('密码错误！', 'danger')
-    background_image_filename = current_app.config.get('BACKGROUND_LOGIN_IMAGE_PATH')
+    background_image_filename = current_app.config.get('BACKGROUND_IMAGE_PATH')
     background_opacity = current_app.config.get('BACKGROUND_OPACITY')
     return render_template('login.html',
                            background_image_filename=background_image_filename,
@@ -97,15 +97,15 @@ def update_settings():
                     file.save(save_path)
                     set_key(dotenv_path, config_key_env_var, new_filename) # 更新.env中的文件名
                     current_app.config[config_key_env_var] = new_filename # 即时更新当前app config
-                    flash(f'{file_input_name.replace("_image", "").replace("_", " ").capitalize()} 背景图片已更新为 {new_filename}。', 'success')
+                    flash(f'背景图片已更新为 {new_filename}。', 'success') # 统一提示信息
                     settings_changed = True
                 except Exception as e:
                     current_app.logger.error(f"保存背景图片失败 ({new_filename}): {e}")
-                    flash(f'保存 {file_input_name.replace("_image", "").replace("_", " ").capitalize()} 背景图片失败: {e}', 'danger')
+                    flash(f'保存背景图片失败: {e}', 'danger') # 统一提示信息
         return
 
-    process_background_image_upload('login_background_image', 'BACKGROUND_LOGIN_IMAGE_PATH', 'default_login')
-    process_background_image_upload('admin_background_image', 'BACKGROUND_ADMIN_IMAGE_PATH', 'default_admin')
+    # 使用统一的表单字段名 'background_image', 统一的配置键, 和统一的默认前缀
+    process_background_image_upload('background_image', 'BACKGROUND_IMAGE_PATH', 'default_background')
 
     new_opacity_str = request.form.get('background_opacity')
     if new_opacity_str:
