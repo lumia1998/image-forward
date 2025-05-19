@@ -72,15 +72,9 @@ body::before {
                     </ul>
                 </div>
             </div>
-        </div>
 
-        <!-- 主内容区 -->
-        <div class="col-md-9 col-lg-10 py-3">
-            <h1>{{ config.APP_NAME }}管理面板</h1>
-            <!-- <p class="lead">选择左侧的合集进行管理，或创建新的合集</p> --> {/* 引导语移除或修改 */}
-            
-            <!-- 个性化设置卡片 -->
-            <div class="card mt-4 mb-4">
+            <!-- 个性化设置卡片 (从主内容区移动过来) -->
+            <div class="card mt-4"> {# Adjusted margin for sidebar context, mb-4 removed as it will be the last item or followed by sidebar end #}
                 <div class="card-header">
                     <h5 class="mb-0">个性化设置</h5>
                 </div>
@@ -126,10 +120,18 @@ body::before {
                             <div class="form-text">范围 0.1 (更透明) 到 1.0 (不透明)。实际效果依赖于Windows 11风格的具体实现。</div>
                         </div>
                         
-                        <button type="submit" class="btn btn-primary">保存设置</button>
+                        <button type="submit" class="btn btn-primary w-100">保存设置</button> {# Added w-100 for better fit in sidebar #}
                     </form>
                 </div>
             </div>
+        </div>
+
+        <!-- 主内容区 -->
+        <div class="col-md-9 col-lg-10 py-3">
+            <h1>{{ config.APP_NAME }}管理面板</h1>
+            <!-- <p class="lead">选择左侧的合集进行管理，或创建新的合集</p> --> {/* 引导语移除或修改 */}
+            
+            <!-- 个性化设置卡片已移至侧边栏 -->
 
             <!-- 合集卡片展示区 -->
             <h4 class="mt-4">我的图床合集</h4>
@@ -139,7 +141,7 @@ body::before {
                 {% for collection_name in collections %}
                 <div class="col">
                     <div class="card h-100 folder-card text-center shadow-sm">
-                        <a href="{{ url_for('admin.manage_collection', collection_name=collection_name) }}" class="text-decoration-none text-dark stretched-link d-flex flex-column justify-content-center align-items-center p-3" style="min-height: 120px;">
+                        <a href="{{ url_for('admin.manage_collection', collection_name=collection_name) }}" class="text-decoration-none text-dark stretched-link d-flex flex-column justify-content-center align-items-center p-3 admin-folder-card-link acrylic-effect" style="min-height: 120px;">
                             <i class="bi bi-folder2-open" style="font-size: 2.5rem; color: #0d6efd;"></i>
                             <h6 class="card-title mt-2 mb-0 text-truncate" title="{{ collection_name }}">{{ collection_name }}</h6>
                         </a>

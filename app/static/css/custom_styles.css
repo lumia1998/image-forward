@@ -119,3 +119,44 @@ body.has-global-background {
     background-repeat: no-repeat;
     background-attachment: fixed; /* Keeps background stationary during scroll */
 }
+/* Acrylic effect for folder card links in admin.html's collection list */
+.admin-folder-card-link.acrylic-effect {
+    /* Using a light, semi-transparent background as the base for the acrylic effect */
+    /* The alpha value (e.g., 0.65) controls the transparency of the base color itself */
+    background-color: rgba(255, 255, 255, 0.55); /* Fallback for browsers not supporting backdrop-filter well, or as a base tint */
+    
+    /* Acrylic effect */
+    -webkit-backdrop-filter: blur(10px) saturate(120%); /* For Safari */
+    backdrop-filter: blur(10px) saturate(120%);      /* Standard */
+
+    /* Ensure border-radius matches or fits well within the parent .folder-card if it has rounded corners */
+    /* The .folder-card has shadow-sm, Bootstrap cards default to a small border-radius (e.g., .25rem or .375rem) */
+    /* We want this acrylic effect to be on the link area, which is inside the card. */
+    border-radius: 0.25rem; /* Adjust to match card's inner roundness or desired look */
+    
+    /* Transition for a smoother hover effect if any */
+    transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out;
+    
+    /* The existing class already has:
+       text-decoration-none text-dark stretched-link 
+       d-flex flex-column justify-content-center align-items-center p-3
+       style="min-height: 120px;" 
+       These should largely remain compatible.
+    */
+}
+
+.admin-folder-card-link.acrylic-effect:hover {
+    background-color: rgba(255, 255, 255, 0.65); /* Slightly more opaque or different tint on hover */
+    /* transform: translateY(-2px); /* Optional: subtle lift effect on hover */
+}
+
+/* Ensure text and icon color have enough contrast against the acrylic effect */
+.admin-folder-card-link.acrylic-effect .bi-folder2-open {
+    /* Default color is #0d6efd, should be fine. If not, adjust here. */
+    /* color: #0056b3; */
+}
+
+.admin-folder-card-link.acrylic-effect .card-title {
+    /* Default color is inherited (text-dark), should be fine. If not, adjust here. */
+    /* color: #212529; */
+}
