@@ -27,7 +27,7 @@ class StorageManager:
         """获取所有图片合集"""
         collections = []
         for item in os.listdir(self.base_dir):
-            if os.path.isdir(os.path.join(self.base_dir, item)):
+            if os.path.isdir(os.path.join(self.base_dir, item)) and item.lower() != 'background':
                 collections.append(item)
         return collections
     

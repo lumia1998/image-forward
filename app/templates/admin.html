@@ -7,11 +7,25 @@
 {% if background_image_filename %}
 <style>
 body {
+    /* Fallback background color, useful if image is transparent or fails to load */
+    background-color: #f8f9fa; /* A light, neutral color, adjust as needed for admin page */
+    position: relative; /* Required for z-index stacking of pseudo-elements */
+}
+body::before {
+    content: "";
+    position: fixed; /* Cover the entire viewport and stay fixed */
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: -1; /* Ensure it's behind all other page content */
+    
     background-image: url("{{ url_for('admin.serve_picture', filename='background/' + background_image_filename) }}");
-    background-size: cover;
-    background-attachment: fixed;
-    background-position: center;
-    background-repeat: no-repeat;
+    background-size: cover; /* Cover the entire area */
+    background-attachment: fixed; /* Background stays fixed during scroll */
+    background-position: center; /* Center the image */
+    background-repeat: no-repeat; /* Do not repeat the image */
+    opacity: {{ config.get('BACKGROUND_OPACITY', 1.0) }}; /* Apply configured opacity */
 }
 </style>
 {% endif %}

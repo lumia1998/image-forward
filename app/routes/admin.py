@@ -60,18 +60,22 @@ def update_settings():
             file = request.files[file_input_name]
             if file and file.filename != '':
                 allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-                original_filename = secure_filename(file.filename)
+                user_submitted_filename = file.filename # 保留用户原始文件名
+
+                # 从用户提交的文件名中安全地提取扩展名
+                _ , raw_file_extension = os.path.splitext(user_submitted_filename)
+                file_ext = raw_file_extension.lower().lstrip('.')
                 
-                if '.' not in original_filename or original_filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
-                    flash(f'为 {file_input_name.replace("_image", "").replace("_", " ").capitalize()} 上传的文件类型无效。请使用 PNG, JPG, GIF, WEBP 格式。', 'danger')
+                if not file_ext or file_ext not in allowed_extensions:
+                    flash(f'文件 "{user_submitted_filename}" 的类型无效 (检测到: {file_ext})。请使用 {", ".join(allowed_extensions).upper()} 格式的图片。', 'danger')
+                    current_app.logger.warning(f"无效文件类型上传: {user_submitted_filename}, 检测到扩展名: {file_ext}")
                     return
 
-                # 使用配置中定义的默认文件名作为基础，只改变扩展名
-                # default_prefix_for_new_file 来自于 config.py 中的 os.getenv 第二个参数的基础名部分
-                # 例如 'default_login' or 'default_admin'
-                current_config_file_basename = os.path.splitext(current_app.config.get(config_key_env_var, f"{default_prefix_for_new_file}.jpg"))[0]
-                ext = original_filename.rsplit('.', 1)[1].lower()
-                new_filename = f"{current_config_file_basename}.{ext}" # 确保文件名和config.py中默认值的基础名一致
+                # 使用配置中定义的默认文件名作为基础，并结合用户上传文件的安全扩展名
+                # default_prefix_for_new_file 来自于 config.py 中的 os.getenv 第二个参数的基础名部分, e.g., 'default_login'
+                # 这确保了我们总是用如 'default_login.png', 'default_admin.webp' 这样的文件名保存和引用
+                base_name_for_saving = os.path.splitext(current_app.config.get(config_key_env_var, f"{default_prefix_for_new_file}.{file_ext}"))[0]
+                new_filename = f"{base_name_for_saving}.{file_ext}"
 
                 background_save_dir = os.path.join(current_app.config.get('PICTURE_DIR', 'picture'), 'background')
                 if not os.path.exists(background_save_dir):
