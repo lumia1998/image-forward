@@ -89,6 +89,8 @@ def update_settings():
                         return
                 
                 save_path = os.path.join(background_save_dir, new_filename)
+                current_app.logger.debug(f"AdminRoutes: Background save directory: {background_save_dir}")
+                current_app.logger.debug(f"AdminRoutes: Attempting to save background image to: {save_path}")
                 
                 try:
                     file.save(save_path)

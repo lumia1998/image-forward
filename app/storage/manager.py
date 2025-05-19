@@ -15,12 +15,14 @@ class StorageManager:
     def base_dir(self):
         """获取图片存储的基础目录"""
         if not self.picture_dir:
-            self.picture_dir = current_app.config.get('PICTURE_DIR', 'picture')
+            config_picture_dir = current_app.config.get('PICTURE_DIR', 'picture')
+            current_app.logger.debug(f"StorageManager: Initial PICTURE_DIR from config: {config_picture_dir}")
+            self.picture_dir = config_picture_dir
             # 确保使用绝对路径，但不重复添加/app前缀
             if not os.path.isabs(self.picture_dir):
                 self.picture_dir = os.path.abspath(self.picture_dir)
+            current_app.logger.debug(f"StorageManager: Calculated absolute base_dir: {self.picture_dir}")
             os.makedirs(self.picture_dir, exist_ok=True)
-            current_app.logger.debug(f"图片存储基础目录: {self.picture_dir}")
         return self.picture_dir
     
     def get_all_collections(self):
@@ -191,9 +193,12 @@ class StorageManager:
         save_path = os.path.join(self.base_dir, collection_name, filename)
         
         try:
+            current_app.logger.debug(f"StorageManager: Attempting to save image to: {save_path}")
             image_file.save(save_path)
+            current_app.logger.info(f"StorageManager: Successfully saved image to: {save_path}")
             return filename
-        except Exception:
+        except Exception as e:
+            current_app.logger.error(f"StorageManager: Failed to save image to {save_path}. Error: {e}")
             return None
     
     def add_links_to_collection(self, collection_name, links):

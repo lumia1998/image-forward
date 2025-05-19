@@ -87,7 +87,7 @@ def serve_project_background(filename):
         if safe_path is None or not os.path.isfile(safe_path):
             current_app.logger.warning(f"Project background file not found or path is unsafe: {filename} in {backgrounds_dir}")
             abort(404)
-        current_app.logger.debug(f"Serving project background: {filename} from {backgrounds_dir}")
+        current_app.logger.debug(f"MainRoutes: Serving project background. Directory: {backgrounds_dir}, Filename: {filename}")
         return send_from_directory(backgrounds_dir, filename)
     else:
         current_app.logger.warning(f"Attempt to access non-allowed project background file: {filename}")
