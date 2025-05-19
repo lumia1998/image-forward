@@ -65,7 +65,7 @@ python run.py
 使用Docker Compose启动服务：
 
 ```bash
-docker-compose up -d
+docker-compose up -d --build
 ```
 
 ## 使用指南
