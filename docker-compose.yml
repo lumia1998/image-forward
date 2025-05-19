@@ -10,7 +10,7 @@ services:
       - .env # 从 .env 文件加载环境变量
     volumes:
       - ./picture:/app/picture # 将主机的 ./picture 目录挂载到容器的 /app/picture 目录
-      - ./background:/app/picture # 将主机的 ./background 目录挂载到容器的 /app/background 目录
+      - ./background:/app/background # 将主机的 ./background 目录挂载到容器的 /app/background 目录
       # 如果有其他需要持久化的数据目录，也可以在这里添加
     restart: unless-stopped # 容器退出时自动重启，除非手动停止
 
