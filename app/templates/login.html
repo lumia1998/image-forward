@@ -1,6 +1,21 @@
 {% extends "base.html" %}
 
-{% block title %}图床转发 - 管理登录{% endblock %}
+{% block title %}{{ config.APP_NAME }} - 管理登录{% endblock %}
+
+{% block extra_css %}
+{{ super() }}
+{% if background_image_filename %}
+<style>
+body {
+    background-image: url("{{ url_for('admin.serve_picture', filename='background/' + background_image_filename) }}");
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+</style>
+{% endif %}
+{% endblock %}
 
 {% block content %}
 <div class="container">

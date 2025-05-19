@@ -1,28 +1,27 @@
 {% extends "base.html" %}
 
-{% block title %}图床转发 - 管理面板{% endblock %}
+{% block title %}{{ config.APP_NAME }} - 管理面板{% endblock %}
+
+{% block extra_css %}
+{{ super() }}
+{% if background_image_filename %}
+<style>
+body {
+    background-image: url("{{ url_for('admin.serve_picture', filename='background/' + background_image_filename) }}");
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+</style>
+{% endif %}
+{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
     <div class="row">
         <!-- 侧边栏：合集列表 -->
         <div class="col-md-3 col-lg-2 sidebar py-3">
-            <h5>合集列表</h5>
-            <hr>
-            {% if collections %}
-            <div class="list-group mb-4">
-                {% for collection in collections %}
-                <a href="{{ url_for('admin.manage_collection', collection_name=collection) }}" class="list-group-item list-group-item-action">
-                    {{ collection }}
-                </a>
-                {% endfor %}
-            </div>
-            {% else %}
-            <div class="alert alert-info">
-                <p>还没有创建任何图片合集</p>
-            </div>
-            {% endif %}
-
             <h5>创建新合集</h5>
             <form method="post" action="{{ url_for('admin.create_collection') }}" class="mb-3">
                 <div class="mb-3">
@@ -32,14 +31,8 @@
                 </div>
                 <button type="submit" class="btn btn-primary w-100">创建合集</button>
             </form>
-        </div>
-
-        <!-- 主内容区 -->
-        <div class="col-md-9 col-lg-10 py-3">
-            <h1>图床转发管理面板</h1>
-            <p class="lead">选择左侧的合集进行管理，或创建新的合集</p>
-
-            <!-- 快速说明 -->
+            
+            <!-- 使用说明 (从右侧移动过来) -->
             <div class="card mt-4">
                 <div class="card-header">
                     <h5 class="mb-0">使用说明</h5>
@@ -66,6 +59,105 @@
                 </div>
             </div>
         </div>
+
+        <!-- 主内容区 -->
+        <div class="col-md-9 col-lg-10 py-3">
+            <h1>{{ config.APP_NAME }}管理面板</h1>
+            <!-- <p class="lead">选择左侧的合集进行管理，或创建新的合集</p> --> {/* 引导语移除或修改 */}
+            
+            <!-- 个性化设置卡片 -->
+            <div class="card mt-4 mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">个性化设置</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('admin.update_settings') }}" enctype="multipart/form-data">
+                        
+                        <!-- 应用名称 -->
+                        <div class="mb-3">
+                            <label for="app_name" class="form-label">应用名称</label>
+                            <input type="text" class="form-control" id="app_name" name="app_name" value="{{ config.get('APP_NAME', '我的图床管理界面') }}">
+                            <div class="form-text">修改后，部分地方可能需要刷新或重启应用才能完全生效。</div>
+                        </div>
+                        <hr>
+
+                        <!-- 登录页背景 -->
+                        <div class="mb-3">
+                            <label for="login_background_image" class="form-label">登录页背景图片 (16:9 推荐)</label>
+                            <input type="file" class="form-control" id="login_background_image" name="login_background_image" accept="image/jpeg,image/png,image/gif,image/webp">
+                            <div class="form-text">当前: {{ config.get('BACKGROUND_LOGIN_IMAGE_PATH', 'default_login.jpg') }}. 上传新图片将覆盖旧图片。</div>
+                            {% if config.get('BACKGROUND_LOGIN_IMAGE_PATH') and config.get('BACKGROUND_LOGIN_IMAGE_PATH') != 'default_login.jpg' %}
+                                <img src="{{ url_for('admin.serve_picture', filename='background/' + config.get('BACKGROUND_LOGIN_IMAGE_PATH')) }}" alt="登录页背景预览" class="img-thumbnail mt-2" style="max-width: 200px; max-height: 112px;">
+                            {% endif %}
+                        </div>
+
+                        <!-- 管理页背景 -->
+                        <div class="mb-3">
+                            <label for="admin_background_image" class="form-label">管理页背景图片 (16:9 推荐)</label>
+                            <input type="file" class="form-control" id="admin_background_image" name="admin_background_image" accept="image/jpeg,image/png,image/gif,image/webp">
+                            <div class="form-text">当前: {{ config.get('BACKGROUND_ADMIN_IMAGE_PATH', 'default_admin.jpg') }}. 上传新图片将覆盖旧图片。</div>
+                             {% if config.get('BACKGROUND_ADMIN_IMAGE_PATH') and config.get('BACKGROUND_ADMIN_IMAGE_PATH') != 'default_admin.jpg' %}
+                                <img src="{{ url_for('admin.serve_picture', filename='background/' + config.get('BACKGROUND_ADMIN_IMAGE_PATH')) }}" alt="管理页背景预览" class="img-thumbnail mt-2" style="max-width: 200px; max-height: 112px;">
+                            {% endif %}
+                        </div>
+                        <hr>
+
+                        <!-- 背景透明度 -->
+                        <div class="mb-3">
+                            <label for="background_opacity" class="form-label">背景透明度</label>
+                            <div class="d-flex align-items-center">
+                                <input type="range" class="form-range me-2" id="background_opacity" name="background_opacity" min="0.1" max="1" step="0.05" value="{{ config.get('BACKGROUND_OPACITY', 1.0) }}">
+                                <span id="opacity_value" class="badge bg-secondary" style="min-width: 40px;">{{ "%.2f"|format(config.get('BACKGROUND_OPACITY', 1.0)) }}</span>
+                            </div>
+                            <div class="form-text">范围 0.1 (更透明) 到 1.0 (不透明)。实际效果依赖于Windows 11风格的具体实现。</div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">保存设置</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 合集卡片展示区 -->
+            <h4 class="mt-4">我的图床合集</h4>
+            <hr>
+            {% if collections %}
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-3 mb-4">
+                {% for collection_name in collections %}
+                <div class="col">
+                    <div class="card h-100 folder-card text-center shadow-sm">
+                        <a href="{{ url_for('admin.manage_collection', collection_name=collection_name) }}" class="text-decoration-none text-dark stretched-link d-flex flex-column justify-content-center align-items-center p-3" style="min-height: 120px;">
+                            <i class="bi bi-folder2-open" style="font-size: 2.5rem; color: #0d6efd;"></i>
+                            <h6 class="card-title mt-2 mb-0 text-truncate" title="{{ collection_name }}">{{ collection_name }}</h6>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="alert alert-light text-center py-4">
+                <i class="bi bi-inbox fs-1 text-muted"></i>
+                <p class="mt-2 mb-0">还没有创建任何图片合集。</p>
+                <p class="text-muted small">尝试在左侧栏创建一个新的合集吧！</p>
+            </div>
+            {% endif %}
+        </div>
     </div>
 </div>
+{% endblock %}
+{% block extra_js %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const opacitySlider = document.getElementById('background_opacity');
+    const opacityValueSpan = document.getElementById('opacity_value');
+    if (opacitySlider && opacityValueSpan) {
+        // Set initial value display correctly formatted
+        opacityValueSpan.textContent = parseFloat(opacitySlider.value).toFixed(2);
+        
+        opacitySlider.oninput = function() {
+            opacityValueSpan.textContent = parseFloat(this.value).toFixed(2);
+        }
+    }
+});
+</script>
 {% endblock %}

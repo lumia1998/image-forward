@@ -1,6 +1,8 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, current_app, send_from_directory
 from app.storage import storage_manager
 from app.auth.auth import login, logout, login_required
+from dotenv import find_dotenv, set_key
+from werkzeug.utils import secure_filename
 import os
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -10,20 +12,27 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 def index():
     """管理页：显示所有图片合集"""
     collections = storage_manager.get_all_collections()
-    return render_template('admin.html', collections=collections)
+    background_image_filename = current_app.config.get('BACKGROUND_ADMIN_IMAGE_PATH')
+    background_opacity = current_app.config.get('BACKGROUND_OPACITY')
+    return render_template('admin.html',
+                           collections=collections,
+                           background_image_filename=background_image_filename,
+                           background_opacity=background_opacity)
 
 @admin_bp.route('/login', methods=['GET', 'POST'])
 def login_page():
     """登录页面"""
     if request.method == 'POST':
         password = request.form.get('password', '')
-        
         if login(password):
             return redirect(url_for('admin.index'))
         else:
             flash('密码错误！', 'danger')
-    
-    return render_template('login.html')
+    background_image_filename = current_app.config.get('BACKGROUND_LOGIN_IMAGE_PATH')
+    background_opacity = current_app.config.get('BACKGROUND_OPACITY')
+    return render_template('login.html',
+                           background_image_filename=background_image_filename,
+                           background_opacity=background_opacity)
 
 @admin_bp.route('/logout')
 def logout_action():
@@ -31,67 +40,132 @@ def logout_action():
     logout()
     return redirect(url_for('admin.login_page'))
 
+@admin_bp.route('/settings/update', methods=['POST'])
+@login_required
+def update_settings():
+    """更新个性化设置"""
+    dotenv_path = find_dotenv() 
+    settings_changed = False
+
+    new_app_name = request.form.get('app_name')
+    if new_app_name and new_app_name.strip() != current_app.config.get('APP_NAME'):
+        set_key(dotenv_path, 'APP_NAME', new_app_name.strip())
+        current_app.config['APP_NAME'] = new_app_name.strip() 
+        flash('应用名称已更新。', 'success')
+        settings_changed = True
+
+    def process_background_image_upload(file_input_name, config_key_env_var, default_prefix_for_new_file):
+        nonlocal settings_changed
+        if file_input_name in request.files:
+            file = request.files[file_input_name]
+            if file and file.filename != '':
+                allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+                original_filename = secure_filename(file.filename)
+                
+                if '.' not in original_filename or original_filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
+                    flash(f'为 {file_input_name.replace("_image", "").replace("_", " ").capitalize()} 上传的文件类型无效。请使用 PNG, JPG, GIF, WEBP 格式。', 'danger')
+                    return
+
+                # 使用配置中定义的默认文件名作为基础，只改变扩展名
+                # default_prefix_for_new_file 来自于 config.py 中的 os.getenv 第二个参数的基础名部分
+                # 例如 'default_login' or 'default_admin'
+                current_config_file_basename = os.path.splitext(current_app.config.get(config_key_env_var, f"{default_prefix_for_new_file}.jpg"))[0]
+                ext = original_filename.rsplit('.', 1)[1].lower()
+                new_filename = f"{current_config_file_basename}.{ext}" # 确保文件名和config.py中默认值的基础名一致
+
+                background_save_dir = os.path.join(current_app.config.get('PICTURE_DIR', 'picture'), 'background')
+                if not os.path.exists(background_save_dir):
+                    try:
+                        os.makedirs(background_save_dir, exist_ok=True)
+                    except OSError as e:
+                        current_app.logger.error(f"创建背景图片目录失败: {e}")
+                        flash(f'创建背景图片目录失败: {background_save_dir}', 'danger')
+                        return
+                
+                save_path = os.path.join(background_save_dir, new_filename)
+                
+                try:
+                    file.save(save_path)
+                    set_key(dotenv_path, config_key_env_var, new_filename) # 更新.env中的文件名
+                    current_app.config[config_key_env_var] = new_filename # 即时更新当前app config
+                    flash(f'{file_input_name.replace("_image", "").replace("_", " ").capitalize()} 背景图片已更新为 {new_filename}。', 'success')
+                    settings_changed = True
+                except Exception as e:
+                    current_app.logger.error(f"保存背景图片失败 ({new_filename}): {e}")
+                    flash(f'保存 {file_input_name.replace("_image", "").replace("_", " ").capitalize()} 背景图片失败: {e}', 'danger')
+        return
+
+    process_background_image_upload('login_background_image', 'BACKGROUND_LOGIN_IMAGE_PATH', 'default_login')
+    process_background_image_upload('admin_background_image', 'BACKGROUND_ADMIN_IMAGE_PATH', 'default_admin')
+
+    new_opacity_str = request.form.get('background_opacity')
+    if new_opacity_str:
+        try:
+            new_opacity = float(new_opacity_str)
+            if 0.1 <= new_opacity <= 1.0:
+                current_opacity = float(current_app.config.get('BACKGROUND_OPACITY', 1.0))
+                if abs(new_opacity - current_opacity) > 1e-5: 
+                    set_key(dotenv_path, 'BACKGROUND_OPACITY', str(new_opacity))
+                    current_app.config['BACKGROUND_OPACITY'] = new_opacity
+                    flash('背景透明度已更新。', 'success')
+                    settings_changed = True
+            else:
+                flash('透明度值必须在 0.1 到 1.0 之间。', 'danger')
+        except ValueError:
+            flash('无效的透明度值。', 'danger')
+            
+    if not settings_changed:
+        flash('没有检测到需要更新的设置。', 'info')
+    else:
+        flash('设置已保存。部分更改可能需要刷新页面或重启应用才能完全生效。', 'info')
+        
+    return redirect(url_for('admin.index'))
+
 @admin_bp.route('/collection/create', methods=['POST'])
 @login_required
 def create_collection():
-    """创建新的合集"""
     collection_name = request.form.get('collection_name', '').strip()
-    
     if not collection_name:
         flash('合集名称不能为空！', 'danger')
         return redirect(url_for('admin.index'))
-    
-    # 检查合集名称是否合法（不包含特殊字符）
-    if not collection_name.isalnum() and collection_name != '_':
+    if not (collection_name.isalnum() or '_' in collection_name) or not collection_name.replace('_', '').isalnum(): # 更准确的检查
         flash('合集名称只能包含字母、数字和下划线！', 'danger')
         return redirect(url_for('admin.index'))
-    
     result = storage_manager.create_collection(collection_name)
-    
     if result:
         flash(f'合集 "{collection_name}" 创建成功！', 'success')
     else:
         flash(f'合集 "{collection_name}" 已存在！', 'warning')
-    
     return redirect(url_for('admin.index'))
 
 @admin_bp.route('/collection/delete', methods=['POST'])
 @login_required
 def delete_collection():
-    """删除合集"""
     collection_name = request.form.get('collection_name', '')
-    
     if not collection_name:
         flash('参数错误！', 'danger')
         return redirect(url_for('admin.index'))
-    
     result = storage_manager.delete_collection(collection_name)
-    
     if result:
         flash(f'合集 "{collection_name}" 删除成功！', 'success')
     else:
         flash(f'删除合集 "{collection_name}" 失败！', 'danger')
-    
     return redirect(url_for('admin.index'))
 
 @admin_bp.route('/collection/<collection_name>')
 @login_required
 def manage_collection(collection_name):
-    """管理指定合集"""
     if not storage_manager.collection_exists(collection_name):
         abort(404)
-    
     images = storage_manager.get_collection_images(collection_name)
     links = storage_manager.get_collection_links(collection_name)
-    
-    # 构造图片URL
     image_urls = []
-    for image in images:
+    for image_filename in images: # 变量名修改为 image_filename
         image_urls.append({
-            'name': image,
-            'url': f'/picture/{collection_name}/{image}'
+            'name': image_filename,
+            # 修正图片URL构造
+            'url': url_for('admin.serve_picture', filename=f'{collection_name}/{image_filename}')
         })
-    
     return render_template(
         'manage_collection.html',
         collection_name=collection_name,
@@ -102,158 +176,134 @@ def manage_collection(collection_name):
 @admin_bp.route('/collection/<collection_name>/upload', methods=['POST'])
 @login_required
 def upload_image(collection_name):
-    """上传图片到合集"""
     if not storage_manager.collection_exists(collection_name):
         abort(404)
-    
-    # 检查是否有文件上传
     if 'images[]' not in request.files:
         flash('没有上传文件！', 'danger')
         return redirect(url_for('admin.manage_collection', collection_name=collection_name))
-    
     files = request.files.getlist('images[]')
-    
-    # 检查是否有选择文件
-    if len(files) == 0 or all(file.filename == '' for file in files):
+    if not files or all(not f.filename for f in files): # 更简洁的检查
         flash('没有选择文件！', 'danger')
         return redirect(url_for('admin.manage_collection', collection_name=collection_name))
     
-    # 上传文件
     success_count = 0
     failed_count = 0
     errors = []
-    
-    # 支持的图片格式
-    allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'psd', 'tif']
+    allowed_extensions = {'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'psd', 'tif'}
     
     for file in files:
-        if file.filename != '':
-            # 检查文件类型
-            filename = file.filename.lower()
-            ext = filename.rsplit('.', 1)[1] if '.' in filename else ''
+        if file and file.filename: # 确保文件存在且有文件名
+            original_filename = secure_filename(file.filename) # 安全处理文件名
+            ext = original_filename.rsplit('.', 1)[1].lower() if '.' in original_filename else ''
             
             if ext not in allowed_extensions:
                 failed_count += 1
-                errors.append(f"不支持的文件类型: {filename}")
-                current_app.logger.warning(f"文件类型不支持: {filename}")
+                errors.append(f"不支持的文件类型: {original_filename}")
+                current_app.logger.warning(f"文件类型不支持: {original_filename}")
                 continue
             
             # 检查文件大小
-            if len(file.read()) > current_app.config.get('MAX_CONTENT_LENGTH', 20 * 1024 * 1024):
-                file.seek(0)  # 重置文件指针
+            file_content = file.read() # 一次性读取
+            if len(file_content) > current_app.config.get('MAX_CONTENT_LENGTH', 20 * 1024 * 1024):
                 failed_count += 1
-                errors.append(f"文件过大: {filename}，最大允许20MB")
-                current_app.logger.warning(f"文件过大: {filename}")
+                errors.append(f"文件过大: {original_filename}，最大允许20MB")
+                current_app.logger.warning(f"文件过大: {original_filename}")
+                file.seek(0) # 为下一个可能的处理器重置指针（虽然这里直接continue）
                 continue
-                
-            file.seek(0)  # 重置文件指针，确保能正确读取文件内容
-            # 尝试保存文件
+            
+            file.seek(0) # 重置指针以供保存
             try:
-                saved_filename = storage_manager.add_image_to_collection(collection_name, file)
+                # storage_manager.add_image_to_collection 应该使用原始文件名或安全处理后的文件名
+                saved_filename = storage_manager.add_image_to_collection(collection_name, file, original_filename)
                 if saved_filename:
                     success_count += 1
                     current_app.logger.info(f"成功上传文件: {saved_filename} 到合集 {collection_name}")
                 else:
                     failed_count += 1
-                    errors.append(f"文件 {filename} 保存失败")
-                    current_app.logger.error(f"文件保存失败: {filename}")
+                    errors.append(f"文件 {original_filename} 保存失败（可能已存在或存储错误）。")
+                    current_app.logger.error(f"文件保存失败: {original_filename}")
             except Exception as e:
                 failed_count += 1
-                errors.append(f"文件 {filename} 上传出错: {str(e)}")
-                current_app.logger.error(f"文件上传异常: {filename}, 错误: {str(e)}")
+                errors.append(f"文件 {original_filename} 上传出错: {str(e)}")
+                current_app.logger.error(f"文件上传异常: {original_filename}, 错误: {str(e)}")
     
-    # 显示上传结果
     if success_count > 0:
         flash(f'成功上传 {success_count} 张图片！', 'success')
-    
     if failed_count > 0:
         for error in errors:
             flash(error, 'warning')
-        flash(f'有 {failed_count} 张图片上传失败！', 'warning')
-    
-    if success_count == 0 and failed_count == 0:
-        flash('没有有效的图片被上传！', 'warning')
-    
+        flash(f'有 {failed_count} 张图片上传失败或未处理！', 'warning')
+    if success_count == 0 and failed_count == 0 and any(f.filename for f in files): # 确保有文件被尝试
+         flash('没有有效的图片被上传（例如，全部为空文件或格式错误）。', 'info')
+
     return redirect(url_for('admin.manage_collection', collection_name=collection_name))
 
 @admin_bp.route('/collection/<collection_name>/add-links', methods=['POST'])
 @login_required
 def add_links(collection_name):
-    """添加外链到合集"""
     if not storage_manager.collection_exists(collection_name):
         abort(404)
-    
     links_text = request.form.get('links', '')
-    
     if not links_text.strip():
         flash('请输入至少一个外链！', 'warning')
         return redirect(url_for('admin.manage_collection', collection_name=collection_name))
-    
-    # 分割文本为链接列表
-    links = [link.strip() for link in links_text.split('\n') if link.strip()]
-    
-    # 验证链接
-    valid_links = []
-    for link in links:
-        if link.startswith(('http://', 'https://')):
-            valid_links.append(link)
-    
+    links = [link.strip() for link in links_text.splitlines() if link.strip()] # 使用 splitlines 更佳
+    valid_links = [link for link in links if link.startswith(('http://', 'https://'))]
     if not valid_links:
         flash('没有有效的外链！所有链接必须以http://或https://开头。', 'warning')
         return redirect(url_for('admin.manage_collection', collection_name=collection_name))
-    
     count = storage_manager.add_links_to_collection(collection_name, valid_links)
-    
     flash(f'成功添加 {count} 个外链！', 'success')
     return redirect(url_for('admin.manage_collection', collection_name=collection_name))
 
 @admin_bp.route('/collection/<collection_name>/delete-image', methods=['POST'])
 @login_required
 def delete_image(collection_name):
-    """从合集中删除图片"""
     if not storage_manager.collection_exists(collection_name):
         abort(404)
-    
     image_name = request.form.get('image_name', '')
-    
     if not image_name:
         flash('参数错误！', 'danger')
         return redirect(url_for('admin.manage_collection', collection_name=collection_name))
-    
     result = storage_manager.delete_image_from_collection(collection_name, image_name)
-    
     if result:
         flash(f'图片 "{image_name}" 删除成功！', 'success')
     else:
         flash(f'删除图片 "{image_name}" 失败！', 'danger')
-    
     return redirect(url_for('admin.manage_collection', collection_name=collection_name))
 
 @admin_bp.route('/collection/<collection_name>/delete-link', methods=['POST'])
 @login_required
 def delete_link(collection_name):
-    """从合集中删除外链"""
     if not storage_manager.collection_exists(collection_name):
         abort(404)
-    
     link = request.form.get('link', '')
-    
     if not link:
         flash('参数错误！', 'danger')
         return redirect(url_for('admin.manage_collection', collection_name=collection_name))
-    
     result = storage_manager.delete_link_from_collection(collection_name, link)
-    
     if result:
         flash('外链删除成功！', 'success')
     else:
         flash('删除外链失败！', 'danger')
-    
     return redirect(url_for('admin.manage_collection', collection_name=collection_name))
 
-# 静态文件服务（图片文件）
 @admin_bp.route('/picture/<path:filename>')
 def serve_picture(filename):
-    """提供图片文件服务"""
-    picture_dir = current_app.config.get('PICTURE_DIR')
-    return send_from_directory(os.path.abspath(picture_dir), filename)
+    """提供图片文件服务, 包括合集图片和背景图片"""
+    # filename 可能像 'collection_name/image.jpg' 或 'background/bg.jpg'
+    picture_base_dir = current_app.config.get('PICTURE_DIR', 'picture') # 'picture'
+    # send_from_directory 需要绝对路径或相对于 app root 的路径
+    # os.path.join 会正确处理 'picture' 和 'collection_name/image.jpg'
+    # 或者 'picture' 和 'background/bg.jpg'
+    # 但 send_from_directory 的第一个参数 'directory' 是指基础目录，不包含 filename 中的路径部分
+    
+    # 如果 filename 是 'background/my_bg.jpg', 则 directory 是 'picture', filename_for_send 是 'background/my_bg.jpg'
+    # 如果 filename 是 'mycollection/my_image.jpg', 则 directory 是 'picture', filename_for_send 是 'mycollection/my_image.jpg'
+    
+    # 所以，directory 应该是 picture_base_dir
+    # filename 已经是 'background/...' 或 'collection_name/...'
+    
+    absolute_picture_dir = os.path.abspath(picture_base_dir)
+    # current_app.logger.debug(f"Attempting to serve: {filename} from directory: {absolute_picture_dir}")
+    return send_from_directory(absolute_picture_dir, filename, as_attachment=False)
