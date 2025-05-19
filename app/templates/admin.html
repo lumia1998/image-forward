@@ -20,7 +20,7 @@ body::before {
     bottom: 0;
     z-index: -1; /* Ensure it's behind all other page content */
     
-    background-image: url("{{ url_for('admin.serve_picture', filename='background/' + background_image_filename) }}");
+    background-image: url("{{ url_for('main.serve_project_background', filename=background_image_filename) }}");
     background-size: cover; /* Cover the entire area */
     background-attachment: fixed; /* Background stays fixed during scroll */
     background-position: center; /* Center the image */
@@ -95,7 +95,7 @@ body::before {
                             <input type="file" class="form-control" id="login_background_image" name="login_background_image" accept="image/jpeg,image/png,image/gif,image/webp">
                             <div class="form-text">当前: {{ config.get('BACKGROUND_LOGIN_IMAGE_PATH', 'default_login.jpg') }}. 上传新图片将覆盖旧图片。</div>
                             {% if config.get('BACKGROUND_LOGIN_IMAGE_PATH') and config.get('BACKGROUND_LOGIN_IMAGE_PATH') != 'default_login.jpg' %}
-                                <img src="{{ url_for('admin.serve_picture', filename='background/' + config.get('BACKGROUND_LOGIN_IMAGE_PATH')) }}" alt="登录页背景预览" class="img-thumbnail mt-2" style="max-width: 200px; max-height: 112px;">
+                                <img src="{{ url_for('main.serve_project_background', filename=config.get('BACKGROUND_LOGIN_IMAGE_PATH')) }}" alt="登录页背景预览" class="img-thumbnail mt-2" style="max-width: 200px; max-height: 112px;">
                             {% endif %}
                         </div>
 
@@ -105,7 +105,7 @@ body::before {
                             <input type="file" class="form-control" id="admin_background_image" name="admin_background_image" accept="image/jpeg,image/png,image/gif,image/webp">
                             <div class="form-text">当前: {{ config.get('BACKGROUND_ADMIN_IMAGE_PATH', 'default_admin.jpg') }}. 上传新图片将覆盖旧图片。</div>
                              {% if config.get('BACKGROUND_ADMIN_IMAGE_PATH') and config.get('BACKGROUND_ADMIN_IMAGE_PATH') != 'default_admin.jpg' %}
-                                <img src="{{ url_for('admin.serve_picture', filename='background/' + config.get('BACKGROUND_ADMIN_IMAGE_PATH')) }}" alt="管理页背景预览" class="img-thumbnail mt-2" style="max-width: 200px; max-height: 112px;">
+                                <img src="{{ url_for('main.serve_project_background', filename=config.get('BACKGROUND_ADMIN_IMAGE_PATH')) }}" alt="管理页背景预览" class="img-thumbnail mt-2" style="max-width: 200px; max-height: 112px;">
                             {% endif %}
                         </div>
                         <hr>

@@ -20,7 +20,7 @@ body::before {
     bottom: 0;
     z-index: -1; /* Ensure it's behind all other page content */
     
-    background-image: url("{{ url_for('admin.serve_picture', filename='background/' + background_image_filename) }}");
+    background-image: url("{{ url_for('main.serve_project_background', filename=background_image_filename) }}");
     background-size: cover; /* Cover the entire area */
     background-attachment: fixed; /* Background stays fixed during scroll */
     background-position: center; /* Center the image */

@@ -15,6 +15,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    background-color: transparent !important; /* 确保包装器背景透明 */
     overflow: hidden; /* 确保封面图片不超出范围 */
     border-radius: 4px; /* 轻微圆角 */
 }

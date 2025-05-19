@@ -77,7 +77,9 @@ def update_settings():
                 base_name_for_saving = os.path.splitext(current_app.config.get(config_key_env_var, f"{default_prefix_for_new_file}.{file_ext}"))[0]
                 new_filename = f"{base_name_for_saving}.{file_ext}"
 
-                background_save_dir = os.path.join(current_app.config.get('PICTURE_DIR', 'picture'), 'background')
+                # 修改：背景图片保存到 /app/project_backgrounds/ (容器内路径)
+                # current_app.root_path 通常是 /app
+                background_save_dir = os.path.join(current_app.root_path, 'project_backgrounds')
                 if not os.path.exists(background_save_dir):
                     try:
                         os.makedirs(background_save_dir, exist_ok=True)
