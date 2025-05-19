@@ -79,7 +79,7 @@ def update_settings():
 
                 # 修改：背景图片保存到 /app/project_backgrounds/ (容器内路径)
                 # current_app.root_path 通常是 /app
-                background_save_dir = os.path.join(current_app.root_path, 'project_backgrounds')
+                background_save_dir = os.path.join(current_app.root_path, 'background')
                 if not os.path.exists(background_save_dir):
                     try:
                         os.makedirs(background_save_dir, exist_ok=True)

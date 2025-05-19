@@ -10,7 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # 创建图片存储目录
-RUN mkdir -p /app/picture
+RUN mkdir -p /app/picture /app/background
 
 # 设置环境变量
 ENV FLASK_APP=run.py

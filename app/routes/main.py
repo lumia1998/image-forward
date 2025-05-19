@@ -71,7 +71,7 @@ def serve_project_background(filename):
     # 假设该目录被映射到容器内的 /app/project_backgrounds/
     # current_app.root_path 指向 /app (如果 WORKDIR 是 /app)
     # 因此，背景图片目录是 /app/project_backgrounds
-    backgrounds_dir = os.path.join(current_app.root_path, 'project_backgrounds')
+    backgrounds_dir = os.path.join(current_app.root_path, 'background')
     
     # 安全性：只允许服务配置中指定的背景图片文件名
     allowed_files = [

@@ -8,6 +8,7 @@ services:
       - "46000:46000"
     volumes:
       - ./picture:/app/picture
+      - ./background:/app/background
       - ./.env:/app/.env
     restart: unless-stopped
     environment:
