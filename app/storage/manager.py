@@ -248,12 +248,20 @@ class StorageManager:
         save_path = os.path.join(self.base_dir, collection_name, filename)
         
         try:
-            current_app.logger.debug(f"StorageManager: Attempting to save image to: {save_path}")
-            image_file.save(save_path)
-            current_app.logger.info(f"StorageManager: Successfully saved image to: {save_path}")
-            return filename
+            current_app.logger.debug(f"StorageManager: Attempting to save image '{filename}' to: {save_path}")
+            image_file.save(save_path) # image_file is werkzeug.datastructures.FileStorage
+            # Post-save verification
+            if os.path.exists(save_path):
+                current_app.logger.info(f"StorageManager: Successfully saved and verified image '{filename}' at: {save_path}")
+                return filename # filename is secure_filename(image_file.filename)
+            else:
+                # This case should ideally not happen if save() didn't raise an exception,
+                # but it's a good sanity check.
+                current_app.logger.error(f"StorageManager: Image save operation for '{filename}' reported success, BUT FILE NOT FOUND at the expected path: {save_path}. Check permissions, disk space, or if the filename contained problematic characters not fully sanitized by secure_filename for this filesystem.")
+                return None
         except Exception as e:
-            current_app.logger.error(f"StorageManager: Failed to save image to {save_path}. Error: {e}")
+            # Log the full exception details for better debugging
+            current_app.logger.error(f"StorageManager: Exception during saving image '{filename}' to '{save_path}'. Error: {e}", exc_info=True)
             return None
     
     def add_links_to_collection(self, collection_name, links):
