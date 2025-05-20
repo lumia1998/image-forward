@@ -12,12 +12,8 @@ class Config:
     APP_NAME = os.getenv('APP_NAME', '图床管理 (Config Default)') # 更新默认值
     BACKGROUND_IMAGE_PATH = os.getenv('BACKGROUND_IMAGE_PATH', 'default_background.jpg') # 统一背景图片
     BACKGROUND_OPACITY = float(os.getenv('BACKGROUND_OPACITY', '1.0')) # 背景透明度，默认为1.0（不透明）
-<<<<<<< HEAD
     NAVBAR_OPACITY = float(os.getenv('NAVBAR_OPACITY', '0.65')) # 导航栏透明度，默认为0.65
     
-=======
-
->>>>>>> 2cd1d506e361912bf9fb9d6471eed1e1e872da4d
     # 服务器配置
     HOST = os.getenv('HOST', '0.0.0.0')
     PORT = int(os.getenv('PORT', 46000))
