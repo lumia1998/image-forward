@@ -8,6 +8,17 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/custom_styles.css') }}">
     <style>
+        body.has-global-background::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black; /* Or any color you want for the overlay */
+            opacity: calc(1 - var(--page-bg-image-opacity, 1.0)); /* Use CSS var, default to 1 (fully transparent overlay / opaque image) */
+            z-index: -1; /* Ensure it's behind the content */
+        }
         .image-preview {
             max-width: 100%;
             max-height: 200px;
@@ -27,13 +38,19 @@
         }
         .sidebar {
             min-height: calc(100vh - 56px);
-            background-color: #f8f9fa;
+            /* background-color: #f8f9fa; */ /* Remove or make transparent if body has background */
+            background-color: transparent;
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-light acrylic-navbar" style="--navbar-bg-opacity: {{ config.get('BACKGROUND_OPACITY', 0.75) }};">
+<body
+    class="has-global-background"
+    style="{% if background_image_filename %}background-image: url('{{ url_for('admin.serve_picture', filename='background/' + background_image_filename) }}');{% endif %} --page-bg-image-opacity: {{ background_opacity | default(config.BACKGROUND_OPACITY, 1.0) }};"
+    data-bs-theme="auto"> {# auto theme detection for bootstrap dark/light mode compatibility #}
+
+    <nav class="navbar navbar-expand-lg navbar-light acrylic-navbar" style="--navbar-bg-opacity: {{ config.get('NAVBAR_OPACITY', config.get('BACKGROUND_OPACITY', 0.65)) }};">
+    {# Navbar opacity defaults to BG opacity, or 0.65 if BG opacity also not set #}
         <div class="container">
             <a class="navbar-brand" href="/">{{ config.APP_NAME }}</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">

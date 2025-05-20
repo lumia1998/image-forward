@@ -3,6 +3,7 @@ import random
 from flask import current_app
 from werkzeug.utils import secure_filename
 import glob
+import requests
 
 class StorageManager:
     """存储管理器，负责处理图片合集的存储和检索"""
@@ -129,51 +130,105 @@ class StorageManager:
             return [line.strip() for line in f if line.strip()]
 
     def get_collection_cover_image_filename(self, collection_name):
-        """获取合集的封面图片文件名（最新上传的图片）
+        """获取合集的封面图片文件名。
+        优先选择合集内按名称排序的第一张本地图片。
+        如果本地图片不存在，则尝试下载第一个外部链接作为封面。
 
         Args:
             collection_name: 合集名称
 
         Returns:
-            str: 最新图片的相对文件名，如果合集为空或不存在则返回 None
+            str: 封面图片的文件名，如果无法确定封面则返回 None
         """
         if not self.collection_exists(collection_name):
             current_app.logger.debug(f"合集 '{collection_name}' 不存在，无法获取封面。")
             return None
 
-        image_filenames = self.get_collection_images(collection_name)
-        if not image_filenames:
-            current_app.logger.debug(f"合集 '{collection_name}' 为空，无法获取封面。")
-            return None
-
         collection_path = os.path.join(self.base_dir, collection_name)
         
-        images_with_mtime = []
-        for filename in image_filenames:
-            full_path = os.path.join(collection_path, filename)
-            try:
-                if os.path.exists(full_path):
-                    mtime = os.path.getmtime(full_path)
-                    images_with_mtime.append((mtime, filename))
-                else:
-                    current_app.logger.warning(f"获取封面时文件未找到 (可能在glob后被删除): {full_path}")
-            except FileNotFoundError:
-                current_app.logger.warning(f"获取封面时文件未找到 (FileNotFoundError): {full_path}")
-                continue
-            except Exception as e:
-                current_app.logger.error(f"获取文件 '{full_path}' 修改时间时出错: {e}")
-                continue
-        
-        if not images_with_mtime:
-            current_app.logger.debug(f"合集 '{collection_name}' 中没有有效的图片文件来确定封面。")
+        # 1. 尝试获取本地图片作为封面
+        image_filenames = self.get_collection_images(collection_name)
+        if image_filenames:
+            # 按文件名排序，取第一张
+            image_filenames.sort()
+            cover_filename = image_filenames[0]
+            current_app.logger.info(f"合集 '{collection_name}' 使用本地图片 '{cover_filename}' 作为封面。")
+            return cover_filename
+
+        # 2. 如果没有本地图片，尝试从外链下载封面
+        current_app.logger.info(f"合集 '{collection_name}' 没有本地图片，尝试从外链获取封面。")
+        external_links = self.get_collection_links(collection_name)
+        if not external_links:
+            current_app.logger.info(f"合集 '{collection_name}' 也没有外链，无法生成封面。")
             return None
 
-        # 按修改时间降序排序，最新的在最前面
-        images_with_mtime.sort(key=lambda item: item[0], reverse=True)
+        # 定义从外链下载的封面文件名
+        # 为了避免与用户上传的文件名冲突，使用一个特殊的前缀或固定名称
+        # 提取原始链接的文件名和扩展名可能复杂且不可靠，因此使用固定名称和尝试从content-type获取扩展名
         
-        latest_image_filename = images_with_mtime[0][1]
-        current_app.logger.debug(f"合集 '{collection_name}' 的封面图片为: {latest_image_filename}")
-        return latest_image_filename
+        default_cover_from_link_basename = "_cover_from_link" # 基础名
+        cover_from_link_filename = None # 完整文件名，稍后确定扩展名
+
+        first_link = external_links[0]
+        
+        # 尝试从链接猜测一个扩展名，如果失败则默认为 .jpg
+        try:
+            link_path = requests.utils.urlparse(first_link).path
+            link_ext = os.path.splitext(link_path)[1].lower()
+            if link_ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp']:
+                 cover_from_link_filename = f"{default_cover_from_link_basename}{link_ext}"
+            else:
+                cover_from_link_filename = f"{default_cover_from_link_basename}.jpg" # 默认
+        except Exception:
+            cover_from_link_filename = f"{default_cover_from_link_basename}.jpg" # 默认
+
+        cover_save_path = os.path.join(collection_path, cover_from_link_filename)
+
+        if os.path.exists(cover_save_path):
+            current_app.logger.info(f"合集 '{collection_name}' 已存在从外链下载的封面 '{cover_from_link_filename}'。")
+            return cover_from_link_filename
+        
+        current_app.logger.info(f"合集 '{collection_name}': 尝试从 '{first_link}' 下载封面到 '{cover_save_path}'。")
+        try:
+            response = requests.get(first_link, timeout=10, stream=True) # stream=True for large files, timeout
+            response.raise_for_status() # Will raise an HTTPError if the HTTP request returned an unsuccessful status code
+
+            # 再次尝试从 Content-Type 获取更准确的扩展名
+            content_type = response.headers.get('content-type')
+            actual_ext = ".jpg" # 默认
+            if content_type:
+                if 'image/jpeg' in content_type:
+                    actual_ext = '.jpg'
+                elif 'image/png' in content_type:
+                    actual_ext = '.png'
+                elif 'image/gif' in content_type:
+                    actual_ext = '.gif'
+                elif 'image/webp' in content_type:
+                    actual_ext = '.webp'
+            
+            # 更新带正确扩展名的文件名和保存路径
+            cover_from_link_filename = f"{default_cover_from_link_basename}{actual_ext}"
+            cover_save_path = os.path.join(collection_path, cover_from_link_filename)
+
+            # 再次检查，如果因为扩展名改变而导致文件已存在
+            if os.path.exists(cover_save_path):
+                current_app.logger.info(f"合集 '{collection_name}' 已存在从外链下载的封面 (更新扩展名后) '{cover_from_link_filename}'。")
+                return cover_from_link_filename
+
+            with open(cover_save_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+            current_app.logger.info(f"成功从 '{first_link}' 下载封面并保存为 '{cover_from_link_filename}'。")
+            return cover_from_link_filename
+        except requests.exceptions.RequestException as e:
+            current_app.logger.error(f"下载封面 '{first_link}' 失败: {e}")
+        except IOError as e:
+            current_app.logger.error(f"保存下载的封面到 '{cover_save_path}' 失败: {e}")
+        except Exception as e:
+            current_app.logger.error(f"处理封面下载时发生未知错误: {e}")
+
+        current_app.logger.warning(f"无法为合集 '{collection_name}' 获取或生成封面。")
+        return None
     
     def add_image_to_collection(self, collection_name, image_file):
         """添加图片到合集

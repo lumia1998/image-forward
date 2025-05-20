@@ -300,19 +300,17 @@ def delete_link(collection_name):
 @admin_bp.route('/picture/<path:filename>')
 def serve_picture(filename):
     """提供图片文件服务, 包括合集图片和背景图片"""
-    # filename 可能像 'collection_name/image.jpg' 或 'background/bg.jpg'
-    picture_base_dir = current_app.config.get('PICTURE_DIR', 'picture') # 'picture'
-    # send_from_directory 需要绝对路径或相对于 app root 的路径
-    # os.path.join 会正确处理 'picture' 和 'collection_name/image.jpg'
-    # 或者 'picture' 和 'background/bg.jpg'
-    # 但 send_from_directory 的第一个参数 'directory' 是指基础目录，不包含 filename 中的路径部分
-    
-    # 如果 filename 是 'background/my_bg.jpg', 则 directory 是 'picture', filename_for_send 是 'background/my_bg.jpg'
-    # 如果 filename 是 'mycollection/my_image.jpg', 则 directory 是 'picture', filename_for_send 是 'mycollection/my_image.jpg'
-    
-    # 所以，directory 应该是 picture_base_dir
-    # filename 已经是 'background/...' 或 'collection_name/...'
-    
-    absolute_picture_dir = os.path.abspath(picture_base_dir)
-    # current_app.logger.debug(f"Attempting to serve: {filename} from directory: {absolute_picture_dir}")
-    return send_from_directory(absolute_picture_dir, filename, as_attachment=False)
+    # 检查 filename 是否以 'background/' 开头，以区分背景图片和合集图片
+    if filename.startswith('background/'):
+        # 从 'background/' 前缀移除，获取真实文件名
+        actual_filename = filename[len('background/'):]
+        # 背景图片的基础目录是项目根目录下的 'background' 文件夹
+        base_dir = os.path.join(current_app.root_path, 'background')
+        # current_app.logger.debug(f"Serving BACKGROUND image: {actual_filename} from base_dir: {base_dir}")
+        return send_from_directory(os.path.abspath(base_dir), actual_filename, as_attachment=False)
+    else:
+        # 合集图片的基础目录从配置的 PICTURE_DIR 获取 (通常是 'picture/')
+        picture_base_dir = current_app.config.get('PICTURE_DIR', 'picture')
+        base_dir = os.path.join(current_app.root_path, picture_base_dir)
+        # current_app.logger.debug(f"Serving COLLECTION image: {filename} from base_dir: {base_dir}")
+        return send_from_directory(os.path.abspath(base_dir), filename, as_attachment=False)

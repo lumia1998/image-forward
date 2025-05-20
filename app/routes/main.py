@@ -22,7 +22,7 @@ def index():
         })
     # 获取背景图片和透明度配置
     # 假设主页使用与管理页相同的背景图片文件名配置键
-    background_image_filename = current_app.config.get('BACKGROUND_ADMIN_IMAGE_PATH')
+    background_image_filename = current_app.config.get('BACKGROUND_IMAGE_PATH')
     background_opacity = current_app.config.get('BACKGROUND_OPACITY')
     
     return render_template('index.html',
