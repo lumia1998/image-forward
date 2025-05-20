@@ -66,29 +66,21 @@ def serve_picture(filename):
 # 新增路由：用于服务项目根目录下存储的背景图片
 @main_bp.route('/project_bg/<path:filename>')
 def serve_project_background(filename):
-    """提供项目根目录下特定子目录中的背景图片文件服务"""
-    # 图片实际存储在宿主机的 d:/image-forward/project_backgrounds/
-    # 假设该目录被映射到容器内的 /app/project_backgrounds/
-    # current_app.root_path 指向 /app (如果 WORKDIR 是 /app)
-    # 因此，背景图片目录是 /app/project_backgrounds
-    backgrounds_dir = os.path.join(current_app.root_path, 'background')
+    """提供项目根目录下的背景图片文件服务"""
+    # 背景图片现在直接存储在项目根目录 /app/ (容器内)
+    backgrounds_dir = current_app.root_path
     
-    # 安全性：只允许服务配置中指定的背景图片文件名
-    allowed_files = [
-        current_app.config.get('BACKGROUND_LOGIN_IMAGE_PATH'),
-        current_app.config.get('BACKGROUND_ADMIN_IMAGE_PATH')
-    ]
-    # 移除None值（如果配置项不存在或为空）
-    allowed_files = [f for f in allowed_files if f]
-
-    if filename in allowed_files:
-        # 使用 safe_join 进一步确保路径安全
-        safe_path = safe_join(backgrounds_dir, filename)
-        if safe_path is None or not os.path.isfile(safe_path):
-            current_app.logger.warning(f"Project background file not found or path is unsafe: {filename} in {backgrounds_dir}")
-            abort(404)
-        current_app.logger.debug(f"MainRoutes: Serving project background. Directory: {backgrounds_dir}, Filename: {filename}")
-        return send_from_directory(backgrounds_dir, filename)
-    else:
-        current_app.logger.warning(f"Attempt to access non-allowed project background file: {filename}")
+    # 使用 safe_join 确保路径安全，并检查文件是否存在
+    safe_path = safe_join(backgrounds_dir, filename)
+    
+    if safe_path is None or not os.path.isfile(safe_path):
+        # 尝试检查文件名是否与配置中的 BACKGROUND_IMAGE_PATH 匹配，以提供更具体的日志
+        configured_bg = current_app.config.get('BACKGROUND_IMAGE_PATH')
+        if filename == configured_bg:
+            current_app.logger.warning(f"Configured project background file not found or path is unsafe: '{filename}' in '{backgrounds_dir}'")
+        else:
+            current_app.logger.warning(f"Project background file not found or path is unsafe: '{filename}' in '{backgrounds_dir}' (not current config)")
         abort(404)
+        
+    current_app.logger.debug(f"MainRoutes: Serving project background from root. Directory: '{backgrounds_dir}', Filename: '{filename}'")
+    return send_from_directory(backgrounds_dir, filename)

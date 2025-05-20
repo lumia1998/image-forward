@@ -4,31 +4,9 @@
 
 {% block extra_css %}
 {{ super() }}
-{% if background_image_filename %}
-<style>
-body {
-    /* Fallback background color, useful if image is transparent or fails to load */
-    background-color: #f0f2f5; /* A light, neutral color, adjust as needed */
-    position: relative; /* Required for z-index stacking of pseudo-elements */
-}
-body::before {
-    content: "";
-    position: fixed; /* Cover the entire viewport and stay fixed */
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    z-index: -1; /* Ensure it's behind all other page content */
-    
-    background-image: url("{{ url_for('main.serve_project_background', filename=background_image_filename) }}");
-    background-size: cover; /* Cover the entire area */
-    background-attachment: fixed; /* Background stays fixed during scroll */
-    background-position: center; /* Center the image */
-    background-repeat: no-repeat; /* Do not repeat the image */
-    opacity: {{ config.get('BACKGROUND_OPACITY', 1.0) }}; /* Apply configured opacity */
-}
-</style>
-{% endif %}
+{# Removed custom body background styles. Base.html now handles global background. #}
+{# Login page will inherit background_image_filename and background_opacity from the view context, #}
+{# and base.html will use them. #}
 {% endblock %}
 
 {% block content %}
@@ -44,7 +22,7 @@ body::before {
                         <div class="mb-3">
                             <label for="password" class="form-label">管理密码</label>
                             <input type="password" class="form-control" id="password" name="password" required>
-                            <div class="form-text">请输入在.env文件中设置的管理密码</div>
+                            <div class="form-text">请输入在您的配置文件 (`.env` 或 `config.py`) 中设置的管理密码</div>
                         </div>
                         <button type="submit" class="btn btn-primary w-100">登录</button>
                     </form>

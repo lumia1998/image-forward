@@ -4,34 +4,9 @@
 
 {% block extra_css %}
 {{ super() }}
-{# 根据当前是哪个页面的背景来选择合适的背景图片变量 #}
-{# 假设主页也使用 'admin' 页的背景设置，如果需要区分，则需要一个新的配置项 #}
-{% if background_image_filename %}
-<style>
-body {
-    /* Fallback background color, useful if image is transparent or fails to load */
-    background-color: #ffffff; /* Or any other suitable default for the index page */
-    position: relative; /* Required for z-index stacking of pseudo-elements */
-}
-body::before {
-    content: "";
-    position: fixed; /* Cover the entire viewport and stay fixed */
-    left: 0; 
-    right: 0; 
-    top: 0; 
-    bottom: 0;
-    z-index: -1; /* Ensure it's behind all other page content */
-    
-    /* Use 'background_image_filename' and 'background_opacity' passed from the route */
-    background-image: url("{{ url_for('main.serve_project_background', filename=background_image_filename) }}");
-    background-size: cover; /* Cover the entire area */
-    background-attachment: fixed; /* Background stays fixed during scroll */
-    background-position: center; /* Center the image */
-    background-repeat: no-repeat; /* Do not repeat the image */
-    opacity: {{ background_opacity }}; /* Apply configured opacity */
-}
-</style>
-{% endif %}
+{# Removed custom body background styles. Base.html now handles global background. #}
+{# Index page will inherit background_image_filename and background_opacity from the view context, #}
+{# and base.html will use them. #}
 {% endblock %}
 {% block content %}
 <div class="container">

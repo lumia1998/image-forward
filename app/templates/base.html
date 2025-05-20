@@ -46,7 +46,7 @@
 </head>
 <body
     class="has-global-background"
-    style="{% if background_image_filename %}background-image: url('{{ url_for('admin.serve_picture', filename='background/' + background_image_filename) }}');{% endif %} --page-bg-image-opacity: {{ background_opacity | default(config.BACKGROUND_OPACITY, 1.0) }};"
+    style="{% if background_image_filename %}background-image: url('{{ url_for('main.serve_project_background', filename=background_image_filename) }}');{% endif %} --page-bg-image-opacity: {{ background_opacity | default(config.BACKGROUND_OPACITY, 1.0) }};"
     data-bs-theme="auto"> {# auto theme detection for bootstrap dark/light mode compatibility #}
 
     <nav class="navbar navbar-expand-lg navbar-light acrylic-navbar" style="--navbar-bg-opacity: {{ config.get('NAVBAR_OPACITY', config.get('BACKGROUND_OPACITY', 0.65)) }};">
