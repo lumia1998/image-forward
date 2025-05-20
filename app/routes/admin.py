@@ -73,15 +73,14 @@ def update_settings():
                 base_name_for_saving = os.path.splitext(current_app.config.get(config_key_env_var, f"{default_prefix_for_new_file}.{file_ext}"))[0]
                 new_filename = f"{base_name_for_saving}.{file_ext}"
 
-                background_save_dir = current_app.root_path # 保存到项目根目录 /app/
-                # 项目根目录 /app 通常已存在，不需要特意创建。
-                # if not os.path.exists(background_save_dir): # 如果需要严格检查或处理非常规环境，可以取消注释
-                #     try:
-                #         os.makedirs(background_save_dir, exist_ok=True)
-                #     except OSError as e:
-                #         current_app.logger.error(f"创建背景图片根目录 '{background_save_dir}' 失败: {e}")
-                #         flash(f'创建背景图片根目录失败: {background_save_dir}', 'danger')
-                #         return
+                background_save_dir = os.path.join(current_app.root_path, 'background') # 保存到 /app/background/
+                if not os.path.exists(background_save_dir):
+                    try:
+                        os.makedirs(background_save_dir, exist_ok=True)
+                    except OSError as e:
+                        current_app.logger.error(f"创建背景图片目录 '/app/background/' 失败: {e}")
+                        flash(f"创建背景图片目录失败: {background_save_dir}", 'danger')
+                        return
                 
                 save_path = os.path.join(background_save_dir, new_filename)
                 current_app.logger.debug(f"AdminRoutes: Background save directory: {background_save_dir}")

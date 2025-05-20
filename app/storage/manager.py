@@ -17,12 +17,18 @@ class StorageManager:
         """获取图片存储的基础目录"""
         if not self.picture_dir:
             config_picture_dir = current_app.config.get('PICTURE_DIR', 'picture')
-            current_app.logger.debug(f"StorageManager: Initial PICTURE_DIR from config: {config_picture_dir}")
-            self.picture_dir = config_picture_dir
-            # 确保使用绝对路径，但不重复添加/app前缀
-            if not os.path.isabs(self.picture_dir):
-                self.picture_dir = os.path.abspath(self.picture_dir)
-            current_app.logger.debug(f"StorageManager: Calculated absolute base_dir: {self.picture_dir}")
+            current_app.logger.debug(f"StorageManager: Initial PICTURE_DIR from config: '{config_picture_dir}' and app.root_path: '{current_app.root_path}'")
+            
+            # 始终基于 app.root_path 构建路径，以避免受 Gunicorn CWD 影响
+            if not os.path.isabs(config_picture_dir):
+                # current_app.root_path is typically /app in the container
+                self.picture_dir = os.path.join(current_app.root_path, config_picture_dir)
+            else:
+                # If PICTURE_DIR was somehow set as an absolute path, use it directly
+                # This case is less likely for 'picture' but good for robustness
+                self.picture_dir = config_picture_dir
+            
+            current_app.logger.info(f"StorageManager: Final calculated base_dir for pictures: {self.picture_dir}")
             os.makedirs(self.picture_dir, exist_ok=True)
         return self.picture_dir
     
