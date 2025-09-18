@@ -257,7 +257,7 @@ def add_links(collection_name):
     flash(f'成功添加 {count} 个外链！', 'success')
     return redirect(url_for('admin.manage_collection', collection_name=collection_name))
 
-@admin_bp.route('/collection/&lt;collection_name&gt;/cache', methods=['POST'])
+@admin_bp.route('/collection/<collection_name>/cache', methods=['POST'])
 @login_required
 def cache_collection(collection_name):
     """启动对指定合集外部链接的缓存任务"""
