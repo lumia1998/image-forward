@@ -260,14 +260,15 @@ def add_links(collection_name):
 @admin_bp.route('/collection/<collection_name>/cache', methods=['POST'])
 @login_required
 def cache_collection(collection_name):
-    """启动对指定合集外部链接的缓存任务"""
+    """启动对指定合集外部链接的缓存任务（后台执行）"""
     if not storage_manager.collection_exists(collection_name):
         abort(404)
     
-    # 调用尚未实现的缓存管理器方法（占位逻辑）
-    storage_manager.cache_external_images(collection_name)
+    # 创建并启动一个后台线程来执行耗时的下载任务
+    thread = threading.Thread(target=storage_manager.cache_external_images, args=(collection_name,))
+    thread.start()
     
-    flash('已启动对合集 {} 的缓存任务。'.format(collection_name), 'success')
+    flash(f'已在后台启动对合集 {collection_name} 的缓存任务。请稍后刷新查看结果。', 'success')
     return redirect(url_for('admin.manage_collection', collection_name=collection_name))
 
 @admin_bp.route('/collection/<collection_name>/delete-image', methods=['POST'])
