@@ -448,5 +448,8 @@ class StorageManager:
             except Exception as e:
                 current_app.logger.error(f"处理链接 '{url}' 时发生未知错误: {e}")
 
+            # 每处理一个链接后，暂停5秒
+            time.sleep(5)
+
         current_app.logger.info(f"合集 '{collection_name}' 的图片缓存完成，共下载 {downloaded_count} 张新图片。")
         return downloaded_count
