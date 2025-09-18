@@ -113,8 +113,11 @@
                 </div>
                 <button type="submit" class="btn btn-primary w-100">添加外链</button>
             </form>
+<h5 class="mt-4">缓存操作</h5>
+<form method="post" action="{{ url_for('admin.cache_collection', collection_name=collection_name) }}">
+    <button type="submit" class="btn btn-info w-100">缓存全部外链图片到本地</button>
+</form>
         </div>
-
         <!-- 主内容区 -->
         <div class="col-md-9 col-lg-10 py-3">
             <h1>管理合集: {{ collection_name }}</h1>

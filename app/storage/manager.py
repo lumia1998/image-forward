@@ -4,6 +4,7 @@ from flask import current_app
 from werkzeug.utils import secure_filename
 import glob
 import requests
+from urllib.parse import urlparse
 
 class StorageManager:
     """存储管理器，负责处理图片合集的存储和检索"""
@@ -356,34 +357,92 @@ class StorageManager:
         return removed
     
     def get_random_resource(self, collection_name):
-        """从合集中随机获取一个资源（本地图片或外链）
+        """从合集中随机获取一个资源（本地图片或外链），优先选择本地图片。
         
         Args:
             collection_name: 合集名称
         
         Returns:
-            tuple: (资源类型, 资源路径或URL)
-                资源类型: 'local' 表示本地图片, 'external' 表示外部链接
-                资源路径: 本地图片为完整文件路径, 外部链接为URL
+            tuple or None: 成功则返回 (资源类型, 资源路径或URL)，失败则返回 None。
+                         资源类型: 'local' 表示本地图片, 'external' 表示外部链接。
+                         资源路径: 本地图片为完整文件路径, 外部链接为URL。
+                         如果合集不存在或为空，则返回 (None, None)。
         """
         if not self.collection_exists(collection_name):
             return None, None
-        
-        # 获取所有本地图片和外链
+
+        # 1. 首先，获取并检查本地图片
         local_images = self.get_collection_images(collection_name)
+        if local_images:
+            # 如果本地图片列表不为空，随机选择一张并返回
+            random_image_name = random.choice(local_images)
+            image_path = os.path.join(self.base_dir, collection_name, random_image_name)
+            return 'local', image_path
+
+        # 2. 如果没有本地图片，再检查外部链接
         external_links = self.get_collection_links(collection_name)
+        if external_links:
+            # 如果外部链接列表不为空，随机选择一个并返回
+            random_link = random.choice(external_links)
+            return 'external', random_link
+
+        # 3. 如果两者都为空，返回 None
+        return None, None
+
+    def cache_external_images(self, collection_name):
+        """缓存合集中的所有外部图片到本地
         
-        # 合并资源
-        resources = []
-        for image in local_images:
-            resources.append(('local', os.path.join(self.base_dir, collection_name, image)))
+        Args:
+            collection_name: 合集名称
         
-        for link in external_links:
-            resources.append(('external', link))
+        Returns:
+            int: 成功下载的图片数量
+        """
+        if not self.collection_exists(collection_name):
+            current_app.logger.warning(f"缓存失败：合集 '{collection_name}' 不存在。")
+            return 0
         
-        if not resources:
-            return None, None
+        external_links = self.get_collection_links(collection_name)
+        if not external_links:
+            current_app.logger.info(f"合集 '{collection_name}' 没有外部链接，无需缓存。")
+            return 0
+            
+        collection_path = os.path.join(self.base_dir, collection_name)
+        downloaded_count = 0
         
-        # 随机选择一个资源
-        resource_type, resource_path = random.choice(resources)
-        return resource_type, resource_path
+        for url in external_links:
+            try:
+                # 从URL中解析出文件名
+                filename = os.path.basename(urlparse(url).path)
+                if not filename:
+                    # 如果URL路径为空或以/结尾，则尝试生成一个随机名称
+                    filename = f"downloaded_{random.randint(1000, 9999)}.jpg"
+                
+                save_path = os.path.join(collection_path, secure_filename(filename))
+                
+                # 检查文件是否已存在
+                if os.path.exists(save_path):
+                    current_app.logger.debug(f"文件 '{save_path}' 已存在，跳过下载。")
+                    continue
+                
+                current_app.logger.info(f"正在从 '{url}' 下载到 '{save_path}'...")
+                response = requests.get(url, stream=True, timeout=15)
+                response.raise_for_status()
+                
+                with open(save_path, 'wb') as f:
+                    # 使用 iter_content 以流式方式写入，而不是 response.content
+                    for chunk in response.iter_content(chunk_size=8192):
+                        f.write(chunk)
+
+                downloaded_count += 1
+                current_app.logger.info(f"成功下载并保存 '{filename}'。")
+
+            except requests.exceptions.RequestException as e:
+                current_app.logger.error(f"下载图片 '{url}' 失败: {e}")
+            except IOError as e:
+                current_app.logger.error(f"保存图片到 '{save_path}' 失败: {e}")
+            except Exception as e:
+                current_app.logger.error(f"处理链接 '{url}' 时发生未知错误: {e}")
+
+        current_app.logger.info(f"合集 '{collection_name}' 的图片缓存完成，共下载 {downloaded_count} 张新图片。")
+        return downloaded_count

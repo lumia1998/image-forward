@@ -257,6 +257,19 @@ def add_links(collection_name):
     flash(f'成功添加 {count} 个外链！', 'success')
     return redirect(url_for('admin.manage_collection', collection_name=collection_name))
 
+@admin_bp.route('/collection/&lt;collection_name&gt;/cache', methods=['POST'])
+@login_required
+def cache_collection(collection_name):
+    """启动对指定合集外部链接的缓存任务"""
+    if not storage_manager.collection_exists(collection_name):
+        abort(404)
+    
+    # 调用尚未实现的缓存管理器方法（占位逻辑）
+    storage_manager.cache_external_images(collection_name)
+    
+    flash('已启动对合集 {} 的缓存任务。'.format(collection_name), 'success')
+    return redirect(url_for('admin.manage_collection', collection_name=collection_name))
+
 @admin_bp.route('/collection/<collection_name>/delete-image', methods=['POST'])
 @login_required
 def delete_image(collection_name):
