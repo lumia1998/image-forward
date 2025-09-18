@@ -265,9 +265,19 @@ def cache_collection(collection_name):
     if not storage_manager.collection_exists(collection_name):
         abort(404)
     
-    # 创建并启动一个后台线程来执行耗时的下载任务
-    thread = threading.Thread(target=storage_manager.cache_external_images, args=(collection_name,))
+    # 获取真实的 app 对象，以便传递给后台线程
+    app = current_app._get_current_object()
+
+    # 定义一个包装函数，在 app 上下文中执行缓存任务
+    def cache_wrapper(app, collection_name):
+        with app.app_context():
+            storage_manager.cache_external_images(collection_name)
+
+    current_app.logger.info(f"--- Cache request for '{collection_name}' received. Preparing background thread. ---")
+    # 创建并启动一个后台线程来执行包装好的任务
+    thread = threading.Thread(target=cache_wrapper, args=(app, collection_name))
     thread.start()
+    current_app.logger.info(f"--- Background thread for '{collection_name}' started. Redirecting user now. ---")
     
     flash(f'已在后台启动对合集 {collection_name} 的缓存任务。请稍后刷新查看结果。', 'success')
     return redirect(url_for('admin.manage_collection', collection_name=collection_name))
