@@ -432,15 +432,24 @@ class StorageManager:
                     counter += 1
 
                 current_app.logger.info(f"正在从 '{url}' 下载到 '{save_path}'...")
-                response = requests.get(url, stream=True, timeout=15)
-                response.raise_for_status()
-                
-                with open(save_path, 'wb') as f:
-                    for chunk in response.iter_content(chunk_size=8192):
-                        f.write(chunk)
-
-                downloaded_count += 1
-                current_app.logger.info(f"成功下载并保存 '{os.path.basename(save_path)}'。")
+                # 增加重试机制，避免临时网络波动或 DNS 解析问题导致 Gunicorn worker 长时间阻塞超时
+                for attempt in range(3):
+                    try:
+                        response = requests.get(url, stream=True, timeout=10)
+                        response.raise_for_status()
+                        with open(save_path, 'wb') as f:
+                            for chunk in response.iter_content(chunk_size=8192):
+                                f.write(chunk)
+                        downloaded_count += 1
+                        current_app.logger.info(f"成功下载并保存 '{os.path.basename(save_path)}'。")
+                        break
+                    except requests.exceptions.Timeout:
+                        current_app.logger.warning(f"下载 '{url}' 超时 (第 {attempt+1} 次重试)...")
+                        if attempt == 2:
+                            raise
+                    except requests.exceptions.RequestException as e:
+                        current_app.logger.error(f"下载图片 '{url}' 失败: {e}")
+                        raise
 
             except requests.exceptions.RequestException as e:
                 current_app.logger.error(f"下载图片 '{url}' 失败: {e}")
@@ -449,8 +458,8 @@ class StorageManager:
             except Exception as e:
                 current_app.logger.error(f"处理链接 '{url}' 时发生未知错误: {e}")
 
-            # 每处理一个链接后，暂停5秒
-            time.sleep(5)
+            # 每处理一个链接后，短暂停顿，减少阻塞风险
+            time.sleep(1)
 
         current_app.logger.info(f"合集 '{collection_name}' 的图片缓存完成，共下载 {downloaded_count} 张新图片。")
         return downloaded_count
