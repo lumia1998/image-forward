@@ -390,7 +390,7 @@ class StorageManager:
         return None, None
 
     def cache_external_images(self, collection_name):
-        """缓存合集中的所有外部图片到本地
+        """缓存合集中的所有外部图片到本地，并处理文件名冲突。
         
         Args:
             collection_name: 合集名称
@@ -412,30 +412,34 @@ class StorageManager:
         
         for url in external_links:
             try:
-                # 从URL中解析出文件名
-                filename = os.path.basename(urlparse(url).path)
-                if not filename:
-                    # 如果URL路径为空或以/结尾，则尝试生成一个随机名称
-                    filename = f"downloaded_{random.randint(1000, 9999)}.jpg"
+                # 从URL中解析出原始文件名
+                original_filename = os.path.basename(urlparse(url).path)
+                if not original_filename:
+                    original_filename = f"downloaded_{random.randint(1000, 9999)}.jpg"
                 
-                save_path = os.path.join(collection_path, secure_filename(filename))
+                # 安全处理文件名并分离基础名和扩展名
+                s_filename = secure_filename(original_filename)
+                name_root, name_ext = os.path.splitext(s_filename)
                 
-                # 检查文件是否已存在
-                if os.path.exists(save_path):
-                    current_app.logger.debug(f"文件 '{save_path}' 已存在，跳过下载。")
-                    continue
-                
+                # 检查文件是否存在并处理重名
+                counter = 1
+                save_path = os.path.join(collection_path, s_filename)
+                while os.path.exists(save_path):
+                    # 如果文件已存在，生成带后缀的新文件名
+                    new_filename = f"{name_root}_{counter}{name_ext}"
+                    save_path = os.path.join(collection_path, new_filename)
+                    counter += 1
+
                 current_app.logger.info(f"正在从 '{url}' 下载到 '{save_path}'...")
                 response = requests.get(url, stream=True, timeout=15)
                 response.raise_for_status()
                 
                 with open(save_path, 'wb') as f:
-                    # 使用 iter_content 以流式方式写入，而不是 response.content
                     for chunk in response.iter_content(chunk_size=8192):
                         f.write(chunk)
 
                 downloaded_count += 1
-                current_app.logger.info(f"成功下载并保存 '{filename}'。")
+                current_app.logger.info(f"成功下载并保存 '{os.path.basename(save_path)}'。")
 
             except requests.exceptions.RequestException as e:
                 current_app.logger.error(f"下载图片 '{url}' 失败: {e}")
