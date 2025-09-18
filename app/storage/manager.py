@@ -357,36 +357,36 @@ class StorageManager:
         return removed
     
     def get_random_resource(self, collection_name):
-        """从合集中随机获取一个资源（本地图片或外链），优先选择本地图片。
+        """从合集中随机获取一个资源（本地图片或外链），实现“本地优先”策略。
         
         Args:
             collection_name: 合集名称
         
         Returns:
-            tuple or None: 成功则返回 (资源类型, 资源路径或URL)，失败则返回 None。
-                         资源类型: 'local' 表示本地图片, 'external' 表示外部链接。
-                         资源路径: 本地图片为完整文件路径, 外部链接为URL。
-                         如果合集不存在或为空，则返回 (None, None)。
+            tuple or None: 成功则返回 ('local' 或 'external', 资源路径或URL)，失败则返回 (None, None)。
         """
         if not self.collection_exists(collection_name):
+            current_app.logger.debug(f"get_random_resource: Collection '{collection_name}' not found.")
             return None, None
 
-        # 1. 首先，获取并检查本地图片
+        # 1. 优先获取本地图片
         local_images = self.get_collection_images(collection_name)
         if local_images:
-            # 如果本地图片列表不为空，随机选择一张并返回
             random_image_name = random.choice(local_images)
             image_path = os.path.join(self.base_dir, collection_name, random_image_name)
+            current_app.logger.debug(f"get_random_resource: Found local image '{random_image_name}' in '{collection_name}'.")
             return 'local', image_path
 
-        # 2. 如果没有本地图片，再检查外部链接
+        # 2. 如果没有本地图片，则尝试获取外部链接
+        current_app.logger.debug(f"get_random_resource: No local images found in '{collection_name}'. Falling back to external links.")
         external_links = self.get_collection_links(collection_name)
         if external_links:
-            # 如果外部链接列表不为空，随机选择一个并返回
             random_link = random.choice(external_links)
+            current_app.logger.debug(f"get_random_resource: Found external link '{random_link}' in '{collection_name}'.")
             return 'external', random_link
 
-        # 3. 如果两者都为空，返回 None
+        # 3. 如果两者都为空
+        current_app.logger.warning(f"get_random_resource: No resources (local or external) found for collection '{collection_name}'.")
         return None, None
 
     def cache_external_images(self, collection_name):
