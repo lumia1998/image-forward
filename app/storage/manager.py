@@ -356,6 +356,50 @@ class StorageManager:
                     f.write(f"{l}\n")
         
         return removed
+
+    def move_image_to_collection(self, source_collection_name, dest_collection_name, image_name):
+        """移动图片到另一个合集
+        
+        Args:
+            source_collection_name (str): 源合集名称
+            dest_collection_name (str): 目标合集名称
+            image_name (str): 图片文件名
+        
+        Returns:
+            str or None: 成功则返回移动后的新文件名，失败则返回None
+        """
+        if not self.collection_exists(source_collection_name) or not self.collection_exists(dest_collection_name):
+            current_app.logger.error(f"移动失败：源合集 '{source_collection_name}' 或目标合集 '{dest_collection_name}' 不存在。")
+            return None
+
+        source_path = os.path.join(self.base_dir, source_collection_name, image_name)
+        if not os.path.exists(source_path):
+            current_app.logger.error(f"移动失败：源文件 '{source_path}' 不存在。")
+            return None
+
+        dest_collection_path = os.path.join(self.base_dir, dest_collection_name)
+        dest_path = os.path.join(dest_collection_path, image_name)
+        
+        new_filename = image_name
+        # 如果目标文件已存在，处理文件名冲突
+        if os.path.exists(dest_path):
+            name_root, name_ext = os.path.splitext(image_name)
+            counter = 1
+            while True:
+                new_filename = f"{name_root}_{counter}{name_ext}"
+                dest_path = os.path.join(dest_collection_path, new_filename)
+                if not os.path.exists(dest_path):
+                    break
+                counter += 1
+        
+        try:
+            import shutil
+            shutil.move(source_path, dest_path)
+            current_app.logger.info(f"成功将 '{source_path}' 移动到 '{dest_path}'")
+            return new_filename
+        except Exception as e:
+            current_app.logger.error(f"移动文件时发生错误: {e}")
+            return None
     
     def get_random_resource(self, collection_name):
         """从合集中随机获取一个资源（本地图片或外链），实现“本地优先”策略。

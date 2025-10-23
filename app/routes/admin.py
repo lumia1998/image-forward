@@ -161,6 +161,7 @@ def manage_collection(collection_name):
         abort(404)
     images = storage_manager.get_collection_images(collection_name)
     links = storage_manager.get_collection_links(collection_name)
+    all_collections = storage_manager.get_all_collections()
     image_urls = []
     for image_filename in images: # 变量名修改为 image_filename
         image_urls.append({
@@ -172,8 +173,39 @@ def manage_collection(collection_name):
         'manage_collection.html',
         collection_name=collection_name,
         images=image_urls,
-        links=links
+        links=links,
+        all_collections=all_collections
     )
+
+@admin_bp.route('/collection/<collection_name>/move-image', methods=['POST'])
+@login_required
+def move_image(collection_name):
+    """移动图片到另一个合集"""
+    if not storage_manager.collection_exists(collection_name):
+        abort(404)
+    
+    image_name = request.form.get('image_name', '')
+    dest_collection_name = request.form.get('dest_collection', '')
+
+    if not image_name or not dest_collection_name:
+        flash('参数错误！', 'danger')
+        return redirect(url_for('admin.manage_collection', collection_name=collection_name))
+
+    if dest_collection_name == collection_name:
+        flash('目标合集不能与源合集相同！', 'info')
+        return redirect(url_for('admin.manage_collection', collection_name=collection_name))
+
+    new_filename = storage_manager.move_image_to_collection(collection_name, dest_collection_name, image_name)
+    
+    if new_filename:
+        if new_filename == image_name:
+            flash(f'图片 "{image_name}" 成功移动到合集 "{dest_collection_name}"！', 'success')
+        else:
+            flash(f'图片 "{image_name}" 成功移动到合集 "{dest_collection_name}" 并重命名为 "{new_filename}" 以避免冲突。', 'success')
+    else:
+        flash(f'移动图片 "{image_name}" 失败！', 'danger')
+        
+    return redirect(url_for('admin.manage_collection', collection_name=collection_name))
 
 @admin_bp.route('/collection/<collection_name>/upload', methods=['POST'])
 @login_required

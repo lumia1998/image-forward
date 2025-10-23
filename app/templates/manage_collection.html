@@ -142,13 +142,51 @@
                                 </div>
                                 <div class="card-body d-flex justify-content-between align-items-center">
                                     <small class="text-muted text-truncate me-2">{{ image.name }}</small>
-                                    <div>
-                                        <a href="{{ image.url }}" target="_blank" class="btn btn-sm btn-primary">查看</a>
-                                        <form method="post" action="{{ url_for('admin.delete_image', collection_name=collection_name) }}" class="d-inline" onsubmit="return confirm('确定要删除此图片吗？');">
-                                            <input type="hidden" name="image_name" value="{{ image.name }}">
-                                            <button type="submit" class="btn btn-sm btn-danger">删除</button>
-                                        </form>
-                                    </div>
+                                    <div class="btn-group">
+                                       <a href="{{ image.url }}" target="_blank" class="btn btn-sm btn-primary">查看</a>
+                                       
+                                       <!-- 移动按钮触发模态框 -->
+                                       <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#moveImageModal-{{ loop.index }}">
+                                           移动
+                                       </button>
+
+                                       <form method="post" action="{{ url_for('admin.delete_image', collection_name=collection_name) }}" class="d-inline" onsubmit="return confirm('确定要删除此图片吗？');">
+                                           <input type="hidden" name="image_name" value="{{ image.name }}">
+                                           <button type="submit" class="btn btn-sm btn-danger">删除</button>
+                                       </form>
+                                   </div>
+
+                                   <!-- 移动图片模态框 -->
+                                   <div class="modal fade" id="moveImageModal-{{ loop.index }}" tabindex="-1" aria-labelledby="moveImageModalLabel-{{ loop.index }}" aria-hidden="true">
+                                       <div class="modal-dialog">
+                                           <div class="modal-content">
+                                               <form method="post" action="{{ url_for('admin.move_image', collection_name=collection_name) }}">
+                                                   <div class="modal-header">
+                                                       <h5 class="modal-title" id="moveImageModalLabel-{{ loop.index }}">移动图片</h5>
+                                                       <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                   </div>
+                                                   <div class="modal-body">
+                                                       <p><strong>图片:</strong> {{ image.name }}</p>
+                                                       <input type="hidden" name="image_name" value="{{ image.name }}">
+                                                       <div class="mb-3">
+                                                           <label for="dest_collection-{{ loop.index }}" class="form-label">选择目标合集:</label>
+                                                           <select class="form-select" name="dest_collection" id="dest_collection-{{ loop.index }}" required>
+                                                               {% for collection in all_collections %}
+                                                                   {% if collection != collection_name %}
+                                                                       <option value="{{ collection }}">{{ collection }}</option>
+                                                                   {% endif %}
+                                                               {% endfor %}
+                                                           </select>
+                                                       </div>
+                                                   </div>
+                                                   <div class="modal-footer">
+                                                       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                                       <button type="submit" class="btn btn-primary">确认移动</button>
+                                                   </div>
+                                               </form>
+                                           </div>
+                                       </div>
+                                   </div>
                                 </div>
                             </div>
                         </div>
