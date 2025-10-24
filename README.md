@@ -10,38 +10,9 @@
 - 支持Docker部署
 - 统一的背景图片和可配置的透明度
 
-## 目录结构
-
-```
-image-forward/
-│
-├── app/                    # 应用代码
-│   ├── routes/             # 路由模块
-│   ├── storage/            # 存储管理
-│   ├── auth/               # 认证模块
-│   ├── static/             # 静态文件
-│   ├── background/         # 存放背景图片
-│   └── templates/          # HTML模板
-│
-├── picture/                # 图片存储目录 (通过Docker Volume持久化)
-├── docs/                   # 文档目录 (例如: project_plan.md)
-├── config.py               # 主要配置文件，包含默认设置
-├── run.py                  # 应用入口
-├── requirements.txt        # 依赖列表
-├── Dockerfile              # Docker配置
-├── docker-compose.yml      # Docker Compose配置
-└── .env                    # (可选) 环境变量配置文件，用于覆盖config.py中的设置
-```
-
 ## 快速开始
 
 ### 1. 环境配置
-
-应用的配置主要通过项目根目录下的 `config.py` 文件进行管理。该文件包含了所有配置项的默认值。
-
-**可选配置覆盖：**
-
-您可以通过以下方式覆盖 `config.py` 中的默认设置：
 
 *   **使用 `.env` 文件**：在项目根目录下创建一个名为 `.env` 的文件。此文件中的环境变量（例如 `ADMIN_PASSWORD=mysecret` 或 `APP_NAME="我的图床"`）将在应用启动时加载，并覆盖 `config.py` 中的相应默认值。
     ```env
@@ -82,7 +53,7 @@ python run.py
 ```
 
 ### 3. Docker部署
-
+ 
 使用 Docker Compose 启动服务：
 
 ```bash
@@ -131,7 +102,7 @@ services:
 
 ## 数据存储
 
-- 所有图片和外链数据存储在项目运行目录下的 `/picture` 文件夹中 (通过 Docker Volume 持久化)。
+- 所有图片和外链数据存储在项目运行目录下的 `/picture` 文件夹中
 - 每个图片合集对应 `/picture` 下的一个子文件夹。
 - 合集下的本地图片直接存储在该子文件夹中。
 - 合集下的外部链接集中存储在子文件夹内一个与合集同名的 `.txt` 文件中。
