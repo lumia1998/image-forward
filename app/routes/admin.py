@@ -314,6 +314,22 @@ def cache_collection(collection_name):
     flash(f'已在后台启动对合集 {collection_name} 的缓存任务。请稍后刷新查看结果。', 'success')
     return redirect(url_for('admin.manage_collection', collection_name=collection_name))
 
+@admin_bp.route('/collection/<collection_name>/rename-long-filenames', methods=['POST'])
+@login_required
+def rename_long_filenames(collection_name):
+    """批量重命名合集中文件名过长的图片"""
+    if not storage_manager.collection_exists(collection_name):
+        abort(404)
+    
+    renamed_count = storage_manager.rename_long_filenames_in_collection(collection_name)
+    
+    if renamed_count > 0:
+        flash(f'成功重命名 {renamed_count} 张图片！', 'success')
+    else:
+        flash('没有需要重命名的图片（所有文件名都已符合要求）。', 'info')
+    
+    return redirect(url_for('admin.manage_collection', collection_name=collection_name))
+
 @admin_bp.route('/collection/<collection_name>/delete-image', methods=['POST'])
 @login_required
 def delete_image(collection_name):

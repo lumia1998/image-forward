@@ -238,6 +238,33 @@ class StorageManager:
         current_app.logger.warning(f"无法为合集 '{collection_name}' 获取或生成封面。")
         return None
     
+    def _get_next_sequential_filename(self, collection_name, extension):
+        """获取合集中下一个可用的顺序文件名
+        
+        Args:
+            collection_name: 合集名称
+            extension: 文件扩展名（包括点号，如 .png）
+        
+        Returns:
+            str: 下一个可用的顺序文件名（如 1.png, 2.jpg）
+        """
+        collection_path = os.path.join(self.base_dir, collection_name)
+        
+        # 获取现有的所有数字命名的文件
+        existing_numbers = set()
+        for item in os.listdir(collection_path):
+            if os.path.isfile(os.path.join(collection_path, item)):
+                name_without_ext = os.path.splitext(item)[0]
+                if name_without_ext.isdigit():
+                    existing_numbers.add(int(name_without_ext))
+        
+        # 找到下一个可用的数字
+        next_num = 1
+        while next_num in existing_numbers:
+            next_num += 1
+        
+        return f"{next_num}{extension}"
+    
     def add_image_to_collection(self, collection_name, image_file):
         """添加图片到合集
         
@@ -253,24 +280,84 @@ class StorageManager:
         
         # 安全处理文件名
         filename = secure_filename(image_file.filename)
+        name_without_ext, extension = os.path.splitext(filename)
+        
+        # 如果文件名（不含扩展名）超过8个字符，自动重命名为顺序数字
+        if len(name_without_ext) > 8:
+            filename = self._get_next_sequential_filename(collection_name, extension)
+            current_app.logger.info(f"StorageManager: 文件名过长，自动重命名为 '{filename}'")
+        
         save_path = os.path.join(self.base_dir, collection_name, filename)
+        
+        # 处理重名文件
+        if os.path.exists(save_path):
+            counter = 1
+            while os.path.exists(save_path):
+                filename = f"{name_without_ext}_{counter}{extension}" if len(name_without_ext) <= 8 else self._get_next_sequential_filename(collection_name, extension)
+                save_path = os.path.join(self.base_dir, collection_name, filename)
+                counter += 1
         
         try:
             current_app.logger.debug(f"StorageManager: Attempting to save image '{filename}' to: {save_path}")
-            image_file.save(save_path) # image_file is werkzeug.datastructures.FileStorage
+            image_file.save(save_path)
             # Post-save verification
             if os.path.exists(save_path):
                 current_app.logger.info(f"StorageManager: Successfully saved and verified image '{filename}' at: {save_path}")
-                return filename # filename is secure_filename(image_file.filename)
+                return filename
             else:
-                # This case should ideally not happen if save() didn't raise an exception,
-                # but it's a good sanity check.
                 current_app.logger.error(f"StorageManager: Image save operation for '{filename}' reported success, BUT FILE NOT FOUND at the expected path: {save_path}. Check permissions, disk space, or if the filename contained problematic characters not fully sanitized by secure_filename for this filesystem.")
                 return None
         except Exception as e:
             # Log the full exception details for better debugging
             current_app.logger.error(f"StorageManager: Exception during saving image '{filename}' to '{save_path}'. Error: {e}", exc_info=True)
             return None
+    
+    def rename_long_filenames_in_collection(self, collection_name, max_length=8):
+        """重命名合集中所有文件名过长的图片为顺序数字
+        
+        Args:
+            collection_name: 合集名称
+            max_length: 文件名最大长度（不含扩展名），默认为8
+        
+        Returns:
+            int: 成功重命名的文件数量
+        """
+        if not self.collection_exists(collection_name):
+            current_app.logger.warning(f"合集 '{collection_name}' 不存在，无法重命名。")
+            return 0
+        
+        collection_path = os.path.join(self.base_dir, collection_name)
+        images = self.get_collection_images(collection_name)
+        renamed_count = 0
+        
+        # 常见图片扩展名
+        image_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.psd', '.tif']
+        
+        for image_name in images:
+            name_without_ext, extension = os.path.splitext(image_name)
+            
+            # 跳过已经是数字命名的文件和短文件名
+            if name_without_ext.isdigit() or len(name_without_ext) <= max_length:
+                continue
+            
+            # 跳过特殊文件（如封面文件）
+            if name_without_ext.startswith('_'):
+                continue
+            
+            # 获取新的顺序文件名
+            new_filename = self._get_next_sequential_filename(collection_name, extension)
+            old_path = os.path.join(collection_path, image_name)
+            new_path = os.path.join(collection_path, new_filename)
+            
+            try:
+                os.rename(old_path, new_path)
+                renamed_count += 1
+                current_app.logger.info(f"重命名: '{image_name}' -> '{new_filename}'")
+            except Exception as e:
+                current_app.logger.error(f"重命名 '{image_name}' 失败: {e}")
+        
+        current_app.logger.info(f"合集 '{collection_name}' 共重命名 {renamed_count} 个文件。")
+        return renamed_count
     
     def add_links_to_collection(self, collection_name, links):
         """添加外链到合集

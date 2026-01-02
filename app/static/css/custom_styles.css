@@ -1,86 +1,133 @@
+/* 大图卡片样式 - 类似画廊风格 */
 .folder-card {
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    border: 1px solid #e0e0e0; /* 轻微的边框 */
+    border: none;
+    border-radius: 8px;
+    overflow: hidden;
+    background: transparent;
+}
+
+.folder-card .card-body {
+    padding: 0 !important;
+    position: relative;
 }
 
 .folder-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
 }
 
 .folder-icon-wrapper {
-    width: 80px; /* 根据图标和封面调整 */
-    height: 80px; /* 根据图标和封面调整 */
-    position: relative; /* 用于定位封面图片 */
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    /* 宽高比 4:3，更适合封面展示 */
+    position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: transparent !important; /* 确保包装器背景透明 */
-    overflow: hidden; /* 确保封面图片不超出范围 */
-    border-radius: 4px; /* 轻微圆角 */
+    background-color: #f0f0f0;
+    overflow: hidden;
+    border-radius: 8px;
 }
 
-.folder-icon-wrapper .bi-folder-fill { /* 针对Bootstrap图标的大小 */
-    font-size: 4rem; /* 调整图标大小 */
+.folder-icon-wrapper .bi-folder-fill {
+    font-size: 4rem;
+    color: #aaa;
 }
 
 .folder-cover-img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* 确保图片覆盖整个区域且不变形 */
+    object-fit: cover;
     position: absolute;
     top: 0;
     left: 0;
+    transition: transform 0.3s ease;
 }
 
-.card-title.fs-6 { /* 确保标题在小卡片上也能良好显示 */
-    line-height: 1.2;
+.folder-card:hover .folder-cover-img {
+    transform: scale(1.05);
 }
+
+/* 底部标签覆盖层 - 毛玻璃效果 */
+.folder-card .card-label {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(255, 255, 255, 0.7);
+    -webkit-backdrop-filter: blur(10px) saturate(120%);
+    backdrop-filter: blur(10px) saturate(120%);
+    color: #333;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.card-title.fs-6 {
+    line-height: 1.2;
+    display: none;
+    /* 隐藏原来的标题，使用标签代替 */
+}
+
 /* Collection Page Album Grid Styles */
 .album-grid .col {
-    padding: 0.25rem; /* 更紧凑的间距 */
+    padding: 0.25rem;
+    /* 更紧凑的间距 */
 }
 
 .album-thumbnail-link {
     display: block;
     overflow: hidden;
-    border-radius: 0.25rem; /* 轻微圆角 */
-    background-color: #f8f9fa; /* 缩略图背景色 */
-    aspect-ratio: 1 / 1; /* 使缩略图容器保持正方形 */
+    border-radius: 0.25rem;
+    /* 轻微圆角 */
+    background-color: #f8f9fa;
+    /* 缩略图背景色 */
+    aspect-ratio: 1 / 1;
+    /* 使缩略图容器保持正方形 */
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
 .album-thumbnail-link:hover {
     transform: scale(1.05);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .album-thumbnail {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* 裁剪并覆盖整个区域 */
+    object-fit: cover;
+    /* 裁剪并覆盖整个区域 */
 }
 
 /* Lightbox Modal Customizations (Optional, Bootstrap defaults are usually fine) */
 #lightboxModal .modal-lg {
-    max-width: 80%; /* Lightbox 可以更宽一些 */
+    max-width: 80%;
+    /* Lightbox 可以更宽一些 */
 }
 
 #lightboxModal .modal-body {
-    padding: 0.5rem; /* 减少内边距，让图片更大 */
+    padding: 0.5rem;
+    /* 减少内边距，让图片更大 */
 }
 
 #lightboxImage {
-    max-height: calc(100vh - 200px); /* 限制图片最大高度，防止超出视口 */
+    max-height: calc(100vh - 200px);
+    /* 限制图片最大高度，防止超出视口 */
     display: block;
     margin: auto;
 }
+
 /* Windows 11 Style Enhancements */
 
 /* Acrylic effect for the top navbar */
 /* The --navbar-bg-opacity CSS variable will be set inline on the nav element in base.html */
 .navbar.acrylic-navbar {
-    background-color: rgba(var(--bs-light-rgb, 248, 249, 250), var(--navbar-bg-opacity, 0.75)); /* Default to light theme base */
+    background-color: rgba(var(--bs-light-rgb, 248, 249, 250), var(--navbar-bg-opacity, 0.75));
+    /* Default to light theme base */
     -webkit-backdrop-filter: blur(12px) saturate(150%);
     backdrop-filter: blur(12px) saturate(150%);
     /* border-bottom: 1px solid rgba(0,0,0,0.05); /* Optional subtle border */
@@ -95,14 +142,16 @@
 /* Ensure content containers on pages with acrylic/mica backgrounds are clearly delineated if needed */
 /* Example: Applying a subtle background to cards or main content areas if body background is very busy */
 .content-card-on-effect-bg {
-    background-color: rgba(255, 255, 255, 0.7); /* Example for light theme content areas */
+    background-color: rgba(255, 255, 255, 0.7);
+    /* Example for light theme content areas */
     /* backdrop-filter: blur(5px); /* Optional: content itself can have a slight blur too */
     border-radius: 8px;
     padding: 1.5rem;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
-.dark-theme .content-card-on-effect-bg { /* if you implement a dark theme switcher */
+.dark-theme .content-card-on-effect-bg {
+    /* if you implement a dark theme switcher */
     background-color: rgba(40, 40, 40, 0.75);
 }
 
@@ -118,26 +167,32 @@ body.has-global-background {
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    background-attachment: fixed; /* Keeps background stationary during scroll */
+    background-attachment: fixed;
+    /* Keeps background stationary during scroll */
 }
+
 /* Acrylic effect for folder card links in admin.html's collection list */
 .admin-folder-card-link.acrylic-effect {
     /* Using a light, semi-transparent background as the base for the acrylic effect */
     /* The alpha value (e.g., 0.65) controls the transparency of the base color itself */
-    background-color: rgba(255, 255, 255, 0.55); /* Fallback for browsers not supporting backdrop-filter well, or as a base tint */
-    
+    background-color: rgba(255, 255, 255, 0.55);
+    /* Fallback for browsers not supporting backdrop-filter well, or as a base tint */
+
     /* Acrylic effect */
-    -webkit-backdrop-filter: blur(10px) saturate(120%); /* For Safari */
-    backdrop-filter: blur(10px) saturate(120%);      /* Standard */
+    -webkit-backdrop-filter: blur(10px) saturate(120%);
+    /* For Safari */
+    backdrop-filter: blur(10px) saturate(120%);
+    /* Standard */
 
     /* Ensure border-radius matches or fits well within the parent .folder-card if it has rounded corners */
     /* The .folder-card has shadow-sm, Bootstrap cards default to a small border-radius (e.g., .25rem or .375rem) */
     /* We want this acrylic effect to be on the link area, which is inside the card. */
-    border-radius: 0.25rem; /* Adjust to match card's inner roundness or desired look */
-    
+    border-radius: 0.25rem;
+    /* Adjust to match card's inner roundness or desired look */
+
     /* Transition for a smoother hover effect if any */
     transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out;
-    
+
     /* The existing class already has:
        text-decoration-none text-dark stretched-link 
        d-flex flex-column justify-content-center align-items-center p-3
@@ -147,7 +202,8 @@ body.has-global-background {
 }
 
 .admin-folder-card-link.acrylic-effect:hover {
-    background-color: rgba(255, 255, 255, 0.65); /* Slightly more opaque or different tint on hover */
+    background-color: rgba(255, 255, 255, 0.65);
+    /* Slightly more opaque or different tint on hover */
     /* transform: translateY(-2px); /* Optional: subtle lift effect on hover */
 }
 

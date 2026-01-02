@@ -1,4 +1,5 @@
-from flask import Blueprint, render_template, abort, send_from_directory, current_app, safe_join
+from flask import Blueprint, render_template, abort, send_from_directory, current_app
+from werkzeug.utils import safe_join
 import os
 from app.storage import storage_manager
 
@@ -8,25 +9,22 @@ main_bp = Blueprint('main', __name__)
 def index():
     """主页：显示所有图片合集"""
     all_collection_names = storage_manager.get_all_collections()
-    collections_with_covers = []
+    collections_with_info = []
     for name in all_collection_names:
-        cover_filename = storage_manager.get_collection_cover_image_filename(name)
-        cover_url = None
-        if cover_filename:
-            # 注意：这里的 URL 构造方式需要与 serve_picture 路由匹配
-            # serve_picture 期望的 filename 是 'collection_name/image_filename.ext'
-            cover_url = f'/picture/{name}/{cover_filename}'
-        collections_with_covers.append({
+        # 检查合集是否有内容（本地图片或外链）
+        has_images = len(storage_manager.get_collection_images(name)) > 0
+        has_links = len(storage_manager.get_collection_links(name)) > 0
+        has_content = has_images or has_links
+        collections_with_info.append({
             'name': name,
-            'cover_url': cover_url
+            'has_content': has_content
         })
     # 获取背景图片和透明度配置
-    # 假设主页使用与管理页相同的背景图片文件名配置键
     background_image_filename = current_app.config.get('BACKGROUND_IMAGE_PATH')
     background_opacity = current_app.config.get('BACKGROUND_OPACITY')
     
     return render_template('index.html',
-                           collections=collections_with_covers,
+                           collections=collections_with_info,
                            background_image_filename=background_image_filename,
                            background_opacity=background_opacity)
 

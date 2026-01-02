@@ -4,460 +4,477 @@
 
 {% block extra_css %}
 <style>
-    .upload-dropzone {
-        border: 2px dashed #ccc;
-        border-radius: 5px;
-        padding: 2rem 1rem;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
+  .upload-dropzone {
+    border: 2px dashed #ccc;
+    border-radius: 5px;
+    padding: 2rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
 
-    .upload-dropzone.highlight {
-        border-color: #4caf50;
-        background-color: rgba(76, 175, 80, 0.1);
-    }
+  .upload-dropzone.highlight {
+    border-color: #4caf50;
+    background-color: rgba(76, 175, 80, 0.1);
+  }
 
-    .upload-message i {
-        font-size: 2.5rem;
-        margin-bottom: 1rem;
-        color: #6c757d;
-    }
+  .upload-message i {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: #6c757d;
+  }
 
-    .file-preview-item {
-        position: relative;
-        border-radius: 4px;
-        overflow: hidden;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-    }
+  .file-preview-item {
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  }
 
-    .file-preview-img {
-        width: 100%;
-        height: 100px;
-        object-fit: cover;
-    }
+  .file-preview-img {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+  }
 
-    .file-name {
-        font-size: 0.8rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
+  .file-name {
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
-    .remove-file {
-        position: absolute;
-        top: 0;
-        right: 0;
-        background: rgba(0,0,0,0.5);
-        color: white;
-        border: none;
-        width: 24px;
-        height: 24px;
-        border-radius: 0 0 0 4px;
-        padding: 0;
-        line-height: 24px;
-    }
+  .remove-file {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 0 0 0 4px;
+    padding: 0;
+    line-height: 24px;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid">
-    <div class="row">
-        <!-- 侧边栏：操作区 -->
-        <div class="col-md-3 col-lg-2 sidebar py-3">
-            <h5>合集操作</h5>
-            <hr>
-            <div class="mb-3">
-                <a href="{{ url_for('admin.index') }}" class="btn btn-secondary btn-sm w-100 mb-2">返回管理面板</a>
-                <form method="post" action="{{ url_for('admin.delete_collection') }}" onsubmit="return confirm('确定要删除整个合集吗？此操作无法撤销！');">
-                    <input type="hidden" name="collection_name" value="{{ collection_name }}">
-                    <button type="submit" class="btn btn-danger btn-sm w-100">删除此合集</button>
-                </form>
-            </div>
+  <div class="row">
+    <!-- 侧边栏：操作区 -->
+    <div class="col-md-3 col-lg-2 sidebar py-3">
+      <h5>合集操作</h5>
+      <hr>
+      <div class="mb-3">
+        <a href="{{ url_for('admin.index') }}" class="btn btn-secondary btn-sm w-100 mb-2">返回管理面板</a>
+        <form method="post" action="{{ url_for('admin.delete_collection') }}"
+          onsubmit="return confirm('确定要删除整个合集吗？此操作无法撤销！');">
+          <input type="hidden" name="collection_name" value="{{ collection_name }}">
+          <button type="submit" class="btn btn-danger btn-sm w-100">删除此合集</button>
+        </form>
+      </div>
 
-            <h5>上传图片</h5>
-            <form id="imageUploadForm" method="post" action="{{ url_for('admin.upload_image', collection_name=collection_name) }}" enctype="multipart/form-data" class="mb-4">
-                <!-- 拖放上传区域 -->
-                <div class="upload-dropzone mb-3" id="uploadDropzone">
-                    <div class="upload-message">
-                        <i class="bi bi-cloud-arrow-up-fill"></i>
-                        <p>拖放图片文件到此处或</p>
-                        <label for="fileInput" class="btn btn-outline-primary btn-sm">选择文件</label>
-                        <input type="file" id="fileInput" name="images[]" multiple
-                            accept="image/jpeg,image/png,image/gif,image/bmp,image/webp,image/tiff,image/vnd.adobe.photoshop"
-                            class="visually-hidden">
-                    </div>
-                </div>
-                
-                <!-- 文件预览区域 -->
-                <div id="previewContainer" class="file-preview-container mb-3" style="display: none;">
-                    <h6>待上传文件 <span id="fileCount" class="badge bg-primary">0</span></h6>
-                    <div id="previewList" class="row row-cols-2 row-cols-md-3 g-2"></div>
-                </div>
-                
-                <!-- 上传进度条 -->
-                <div class="progress mb-3" id="uploadProgress" style="display: none;">
-                    <div class="progress-bar" role="progressbar" style="width: 0%" id="progressBar"></div>
-                </div>
-                
-                <!-- 上传按钮 -->
-                <button type="button" id="uploadButton" class="btn btn-primary w-100" disabled>上传图片</button>
-                <div class="form-text mt-1">支持jpg、png、gif、psd、tif、bmp、webp格式，最大20MB/张</div>
-            </form>
-
-            <h5>添加外链</h5>
-            <form method="post" action="{{ url_for('admin.add_links', collection_name=collection_name) }}" class="mb-4">
-                <div class="mb-3">
-                    <label for="links" class="form-label">图片外链地址</label>
-                    <textarea class="form-control" id="links" name="links" rows="5" placeholder="每行一个链接，以http://或https://开头" required></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary w-100">添加外链</button>
-            </form>
-<h5 class="mt-4">缓存操作</h5>
-<form method="post" action="{{ url_for('admin.cache_collection', collection_name=collection_name) }}">
-    <button type="submit" class="btn btn-primary w-100">缓存全部外链图片到本地</button>
-</form>
+      <h5>上传图片</h5>
+      <form id="imageUploadForm" method="post"
+        action="{{ url_for('admin.upload_image', collection_name=collection_name) }}" enctype="multipart/form-data"
+        class="mb-4">
+        <!-- 拖放上传区域 -->
+        <div class="upload-dropzone mb-3" id="uploadDropzone">
+          <div class="upload-message">
+            <i class="bi bi-cloud-arrow-up-fill"></i>
+            <p>拖放图片文件到此处或</p>
+            <label for="fileInput" class="btn btn-outline-primary btn-sm">选择文件</label>
+            <input type="file" id="fileInput" name="images[]" multiple
+              accept="image/jpeg,image/png,image/gif,image/bmp,image/webp,image/tiff,image/vnd.adobe.photoshop"
+              class="visually-hidden">
+          </div>
         </div>
-        <!-- 主内容区 -->
-        <div class="col-md-9 col-lg-10 py-3">
-            <h1>管理合集: {{ collection_name }}</h1>
-            <p class="lead">
-                随机获取图片: <code>{{ request.host_url }}{{ collection_name }}</code>
-                <a href="{{ request.host_url }}{{ collection_name }}" target="_blank" class="btn btn-sm btn-outline-primary ms-2">测试</a>
-            </p>
 
-            <!-- 本地图片管理 -->
-            <div class="card mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">本地图片 ({{ images|length }}张)</h5>
-                </div>
-                <div class="card-body">
-                    {% if images %}
-                    <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
-                        {% for image in images %}
-                        <div class="col">
-                            <div class="card image-card">
-                                <div class="image-container">
-                                    <img src="{{ image.url }}" class="image-preview" alt="{{ image.name }}">
-                                </div>
-                                <div class="card-body d-flex justify-content-between align-items-center">
-                                    <small class="text-muted text-truncate me-2">{{ image.name }}</small>
-                                    <div>
-                                       <a href="{{ image.url }}" target="_blank" class="btn btn-sm btn-primary">查看</a>
-                                       
-                                       <!-- 移动按钮触发模态框 -->
-                                       <button type="button" class="btn btn-sm btn-primary mx-1" data-bs-toggle="modal" data-bs-target="#moveImageModal-{{ loop.index }}">
-                                           移动
-                                       </button>
-
-                                       <form method="post" action="{{ url_for('admin.delete_image', collection_name=collection_name) }}" class="d-inline" onsubmit="return confirm('确定要删除此图片吗？');">
-                                           <input type="hidden" name="image_name" value="{{ image.name }}">
-                                           <button type="submit" class="btn btn-sm btn-danger">删除</button>
-                                       </form>
-                                   </div>
-
-                                   <!-- 移动图片模态框 -->
-                                   <div class="modal fade" id="moveImageModal-{{ loop.index }}" tabindex="-1" aria-labelledby="moveImageModalLabel-{{ loop.index }}" aria-hidden="true">
-                                       <div class="modal-dialog">
-                                           <div class="modal-content">
-                                               <form method="post" action="{{ url_for('admin.move_image', collection_name=collection_name) }}">
-                                                   <div class="modal-header">
-                                                       <h5 class="modal-title" id="moveImageModalLabel-{{ loop.index }}">移动图片</h5>
-                                                       <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                   </div>
-                                                   <div class="modal-body">
-                                                       <p><strong>图片:</strong> {{ image.name }}</p>
-                                                       <input type="hidden" name="image_name" value="{{ image.name }}">
-                                                       <div class="mb-3">
-                                                           <label for="dest_collection-{{ loop.index }}" class="form-label">选择目标合集:</label>
-                                                           <select class="form-select" name="dest_collection" id="dest_collection-{{ loop.index }}" required>
-                                                               {% for collection in all_collections %}
-                                                                   {% if collection != collection_name %}
-                                                                       <option value="{{ collection }}">{{ collection }}</option>
-                                                                   {% endif %}
-                                                               {% endfor %}
-                                                           </select>
-                                                       </div>
-                                                   </div>
-                                                   <div class="modal-footer">
-                                                       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                                                       <button type="submit" class="btn btn-primary">确认移动</button>
-                                                   </div>
-                                               </form>
-                                           </div>
-                                       </div>
-                                   </div>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% else %}
-                    <div class="alert alert-info">
-                        <p>该合集中还没有本地图片。使用左侧上传功能添加图片。</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- 外链管理 -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">外链图片 ({{ links|length }}个)</h5>
-                </div>
-                <div class="card-body">
-                    {% if links %}
-                    <div class="list-group">
-                        {% for link in links %}
-                        <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                            <div class="text-truncate me-3">{{ link }}</div>
-                            <div>
-                                <a href="{{ link }}" target="_blank" class="btn btn-sm btn-primary">查看</a>
-                                <form method="post" action="{{ url_for('admin.delete_link', collection_name=collection_name) }}" class="d-inline" onsubmit="return confirm('确定要删除此外链吗？');">
-                                    <input type="hidden" name="link" value="{{ link }}">
-                                    <button type="submit" class="btn btn-sm btn-danger">删除</button>
-                                </form>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% else %}
-                    <div class="alert alert-info">
-                        <p>该合集中还没有外链图片。使用左侧添加功能添加外链。</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
+        <!-- 文件预览区域 -->
+        <div id="previewContainer" class="file-preview-container mb-3" style="display: none;">
+          <h6>待上传文件 <span id="fileCount" class="badge bg-primary">0</span></h6>
+          <div id="previewList" class="row row-cols-2 row-cols-md-3 g-2"></div>
         </div>
+
+        <!-- 上传进度条 -->
+        <div class="progress mb-3" id="uploadProgress" style="display: none;">
+          <div class="progress-bar" role="progressbar" style="width: 0%" id="progressBar"></div>
+        </div>
+
+        <!-- 上传按钮 -->
+        <button type="button" id="uploadButton" class="btn btn-primary w-100" disabled>上传图片</button>
+        <div class="form-text mt-1">支持jpg、png、gif、psd、tif、bmp、webp格式，最大20MB/张</div>
+      </form>
+
+      <h5>添加外链</h5>
+      <form method="post" action="{{ url_for('admin.add_links', collection_name=collection_name) }}" class="mb-4">
+        <div class="mb-3">
+          <label for="links" class="form-label">图片外链地址</label>
+          <textarea class="form-control" id="links" name="links" rows="5" placeholder="每行一个链接，以http://或https://开头"
+            required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">添加外链</button>
+      </form>
+      <h5 class="mt-4">缓存操作</h5>
+      <form method="post" action="{{ url_for('admin.cache_collection', collection_name=collection_name) }}">
+        <button type="submit" class="btn btn-primary w-100">缓存全部外链图片到本地</button>
+      </form>
+
+      <h5 class="mt-4">文件重命名</h5>
+      <form method="post" action="{{ url_for('admin.rename_long_filenames', collection_name=collection_name) }}"
+        onsubmit="return confirm('将把所有文件名超过8个字符的图片重命名为数字序号，确定继续？');">
+        <button type="submit" class="btn btn-warning w-100">批量重命名长文件名</button>
+        <div class="form-text">文件名超过8字符的图片将被重命名为1、2、3...</div>
+      </form>
     </div>
+    <!-- 主内容区 -->
+    <div class="col-md-9 col-lg-10 py-3">
+      <h1>管理合集: {{ collection_name }}</h1>
+      <p class="lead">
+        随机获取图片: <code>{{ request.host_url }}{{ collection_name }}</code>
+        <a href="{{ request.host_url }}{{ collection_name }}" target="_blank"
+          class="btn btn-sm btn-outline-primary ms-2">测试</a>
+      </p>
+
+      <!-- 本地图片管理 -->
+      <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">本地图片 ({{ images|length }}张)</h5>
+        </div>
+        <div class="card-body">
+          {% if images %}
+          <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
+            {% for image in images %}
+            <div class="col">
+              <div class="card image-card">
+                <div class="image-container">
+                  <img src="{{ image.url }}" class="image-preview" alt="{{ image.name }}">
+                </div>
+                <div class="card-body d-flex justify-content-between align-items-center">
+                  <small class="text-muted text-truncate me-2">{{ image.name }}</small>
+                  <div>
+                    <a href="{{ image.url }}" target="_blank" class="btn btn-sm btn-primary">查看</a>
+
+                    <!-- 移动按钮触发模态框 -->
+                    <button type="button" class="btn btn-sm btn-primary mx-1" data-bs-toggle="modal"
+                      data-bs-target="#moveImageModal-{{ loop.index }}">
+                      移动
+                    </button>
+
+                    <form method="post" action="{{ url_for('admin.delete_image', collection_name=collection_name) }}"
+                      class="d-inline" onsubmit="return confirm('确定要删除此图片吗？');">
+                      <input type="hidden" name="image_name" value="{{ image.name }}">
+                      <button type="submit" class="btn btn-sm btn-danger">删除</button>
+                    </form>
+                  </div>
+
+                  <!-- 移动图片模态框 -->
+                  <div class="modal fade" id="moveImageModal-{{ loop.index }}" tabindex="-1"
+                    aria-labelledby="moveImageModalLabel-{{ loop.index }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <form method="post" action="{{ url_for('admin.move_image', collection_name=collection_name) }}">
+                          <div class="modal-header">
+                            <h5 class="modal-title" id="moveImageModalLabel-{{ loop.index }}">移动图片</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body">
+                            <p><strong>图片:</strong> {{ image.name }}</p>
+                            <input type="hidden" name="image_name" value="{{ image.name }}">
+                            <div class="mb-3">
+                              <label for="dest_collection-{{ loop.index }}" class="form-label">选择目标合集:</label>
+                              <select class="form-select" name="dest_collection" id="dest_collection-{{ loop.index }}"
+                                required>
+                                {% for collection in all_collections %}
+                                {% if collection != collection_name %}
+                                <option value="{{ collection }}">{{ collection }}</option>
+                                {% endif %}
+                                {% endfor %}
+                              </select>
+                            </div>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                            <button type="submit" class="btn btn-primary">确认移动</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="alert alert-info">
+            <p>该合集中还没有本地图片。使用左侧上传功能添加图片。</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- 外链管理 -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">外链图片 ({{ links|length }}个)</h5>
+        </div>
+        <div class="card-body">
+          {% if links %}
+          <div class="list-group">
+            {% for link in links %}
+            <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              <div class="text-truncate me-3">{{ link }}</div>
+              <div>
+                <a href="{{ link }}" target="_blank" class="btn btn-sm btn-primary">查看</a>
+                <form method="post" action="{{ url_for('admin.delete_link', collection_name=collection_name) }}"
+                  class="d-inline" onsubmit="return confirm('确定要删除此外链吗？');">
+                  <input type="hidden" name="link" value="{{ link }}">
+                  <button type="submit" class="btn btn-sm btn-danger">删除</button>
+                </form>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="alert alert-info">
+            <p>该合集中还没有外链图片。使用左侧添加功能添加外链。</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  // 获取DOM元素
-  const dropzone = document.getElementById('uploadDropzone');
-  const fileInput = document.getElementById('fileInput');
-  const previewContainer = document.getElementById('previewContainer');
-  const previewList = document.getElementById('previewList');
-  const fileCount = document.getElementById('fileCount');
-  const uploadButton = document.getElementById('uploadButton');
-  const uploadProgress = document.getElementById('uploadProgress');
-  const progressBar = document.getElementById('progressBar');
-  const form = document.getElementById('imageUploadForm');
-  
-  // 存储选择的文件
-  let selectedFiles = [];
-  
-  // 处理拖放事件
-  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-    dropzone.addEventListener(eventName, preventDefaults, false);
-  });
-  
-  function preventDefaults(e) {
-    e.preventDefault();
-    e.stopPropagation();
-  }
-  
-  // 高亮拖放区域
-  ['dragenter', 'dragover'].forEach(eventName => {
-    dropzone.addEventListener(eventName, highlight, false);
-  });
-  
-  ['dragleave', 'drop'].forEach(eventName => {
-    dropzone.addEventListener(eventName, unhighlight, false);
-  });
-  
-  function highlight() {
-    dropzone.classList.add('highlight');
-  }
-  
-  function unhighlight() {
-    dropzone.classList.remove('highlight');
-  }
-  
-  // 处理文件拖放
-  dropzone.addEventListener('drop', handleDrop, false);
-  fileInput.addEventListener('change', handleFiles, false);
-  
-  function handleDrop(e) {
-    const dt = e.dataTransfer;
-    const files = dt.files;
-    handleFiles({ target: { files: files } });
-  }
-  
-  // 处理文件选择
-  function handleFiles(e) {
-    const files = e.target.files;
-    
-    if (files.length === 0) return;
-    
-    // 验证文件类型和大小
-    Array.from(files).forEach(file => {
-      // 验证文件类型
-      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp', 'image/tiff', 'image/vnd.adobe.photoshop'];
-      if (!validTypes.includes(file.type)) {
-        alert(`不支持的文件类型: ${file.name}`);
-        return;
-      }
-      
-      // 验证文件大小 (20MB限制)
-      if (file.size > 20 * 1024 * 1024) {
-        alert(`文件过大: ${file.name}. 最大允许20MB.`);
-        return;
-      }
-      
-      // 检查是否已经添加过相同文件名的文件
-      if (selectedFiles.some(f => f.name === file.name)) {
-        return;
-      }
-      
-      selectedFiles.push(file);
-      createPreview(file);
+  document.addEventListener('DOMContentLoaded', function () {
+    // 获取DOM元素
+    const dropzone = document.getElementById('uploadDropzone');
+    const fileInput = document.getElementById('fileInput');
+    const previewContainer = document.getElementById('previewContainer');
+    const previewList = document.getElementById('previewList');
+    const fileCount = document.getElementById('fileCount');
+    const uploadButton = document.getElementById('uploadButton');
+    const uploadProgress = document.getElementById('uploadProgress');
+    const progressBar = document.getElementById('progressBar');
+    const form = document.getElementById('imageUploadForm');
+
+    // 存储选择的文件
+    let selectedFiles = [];
+
+    // 处理拖放事件
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      dropzone.addEventListener(eventName, preventDefaults, false);
     });
-    
-    updateUI();
-  }
-  
-  // 创建文件预览
-  function createPreview(file) {
-    const reader = new FileReader();
-    
-    reader.onload = function(e) {
-      const col = document.createElement('div');
-      col.className = 'col';
-      
-      const previewItem = document.createElement('div');
-      previewItem.className = 'file-preview-item';
-      
-      const img = document.createElement('img');
-      img.src = e.target.result;
-      img.className = 'file-preview-img';
-      img.alt = file.name;
-      
-      const fileInfo = document.createElement('div');
-      fileInfo.className = 'p-2';
-      
-      const fileName = document.createElement('div');
-      fileName.className = 'file-name';
-      fileName.textContent = file.name;
-      
-      const fileSize = document.createElement('small');
-      fileSize.className = 'text-muted';
-      fileSize.textContent = formatFileSize(file.size);
-      
-      const removeBtn = document.createElement('button');
-      removeBtn.className = 'remove-file';
-      removeBtn.innerHTML = '&times;';
-      removeBtn.dataset.filename = file.name;
-      removeBtn.addEventListener('click', function() {
-        removeFile(file.name);
-        col.remove();
-      });
-      
-      fileInfo.appendChild(fileName);
-      fileInfo.appendChild(fileSize);
-      
-      previewItem.appendChild(img);
-      previewItem.appendChild(fileInfo);
-      previewItem.appendChild(removeBtn);
-      
-      col.appendChild(previewItem);
-      previewList.appendChild(col);
-    };
-    
-    reader.readAsDataURL(file);
-  }
-  
-  // 移除文件
-  function removeFile(filename) {
-    selectedFiles = selectedFiles.filter(file => file.name !== filename);
-    updateUI();
-  }
-  
-  // 更新UI状态
-  function updateUI() {
-    if (selectedFiles.length > 0) {
-      previewContainer.style.display = 'block';
-      uploadButton.disabled = false;
-      fileCount.textContent = selectedFiles.length;
-    } else {
-      previewContainer.style.display = 'none';
-      uploadButton.disabled = true;
-      fileCount.textContent = '0';
+
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
     }
-  }
-  
-  // 格式化文件大小
-  function formatFileSize(bytes) {
-    if (bytes < 1024) return bytes + ' bytes';
-    else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-    else return (bytes / 1048576).toFixed(1) + ' MB';
-  }
-  
-  // 处理文件上传
-  uploadButton.addEventListener('click', uploadFiles);
-  
-  function uploadFiles() {
-    if (selectedFiles.length === 0) return;
-    
-    const formData = new FormData();
-    selectedFiles.forEach(file => {
-      formData.append('images[]', file);
+
+    // 高亮拖放区域
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropzone.addEventListener(eventName, highlight, false);
     });
-    
-    // 显示进度条
-    uploadProgress.style.display = 'block';
-    uploadButton.disabled = true;
-    progressBar.style.width = '0%';
-    progressBar.textContent = '';
-    
-    // 发送请求
-    const xhr = new XMLHttpRequest();
-    const action = form.getAttribute('action');
-    xhr.open('POST', action, true);
-    
-    // 监听上传进度
-    xhr.upload.addEventListener('progress', function(e) {
-      if (e.lengthComputable) {
-        const percentComplete = (e.loaded / e.total) * 100;
-        progressBar.style.width = percentComplete + '%';
-        progressBar.textContent = Math.round(percentComplete) + '%';
-      }
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropzone.addEventListener(eventName, unhighlight, false);
     });
-    
-    // 处理上传完成
-    xhr.onload = function() {
-      if (xhr.status === 200) {
-        // 成功上传，刷新页面显示结果
-        window.location.reload();
+
+    function highlight() {
+      dropzone.classList.add('highlight');
+    }
+
+    function unhighlight() {
+      dropzone.classList.remove('highlight');
+    }
+
+    // 处理文件拖放
+    dropzone.addEventListener('drop', handleDrop, false);
+    fileInput.addEventListener('change', handleFiles, false);
+
+    function handleDrop(e) {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      handleFiles({ target: { files: files } });
+    }
+
+    // 处理文件选择
+    function handleFiles(e) {
+      const files = e.target.files;
+
+      if (files.length === 0) return;
+
+      // 验证文件类型和大小
+      Array.from(files).forEach(file => {
+        // 验证文件类型
+        const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp', 'image/tiff', 'image/vnd.adobe.photoshop'];
+        if (!validTypes.includes(file.type)) {
+          alert(`不支持的文件类型: ${file.name}`);
+          return;
+        }
+
+        // 验证文件大小 (20MB限制)
+        if (file.size > 20 * 1024 * 1024) {
+          alert(`文件过大: ${file.name}. 最大允许20MB.`);
+          return;
+        }
+
+        // 检查是否已经添加过相同文件名的文件
+        if (selectedFiles.some(f => f.name === file.name)) {
+          return;
+        }
+
+        selectedFiles.push(file);
+        createPreview(file);
+      });
+
+      updateUI();
+    }
+
+    // 创建文件预览
+    function createPreview(file) {
+      const reader = new FileReader();
+
+      reader.onload = function (e) {
+        const col = document.createElement('div');
+        col.className = 'col';
+
+        const previewItem = document.createElement('div');
+        previewItem.className = 'file-preview-item';
+
+        const img = document.createElement('img');
+        img.src = e.target.result;
+        img.className = 'file-preview-img';
+        img.alt = file.name;
+
+        const fileInfo = document.createElement('div');
+        fileInfo.className = 'p-2';
+
+        const fileName = document.createElement('div');
+        fileName.className = 'file-name';
+        fileName.textContent = file.name;
+
+        const fileSize = document.createElement('small');
+        fileSize.className = 'text-muted';
+        fileSize.textContent = formatFileSize(file.size);
+
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'remove-file';
+        removeBtn.innerHTML = '&times;';
+        removeBtn.dataset.filename = file.name;
+        removeBtn.addEventListener('click', function () {
+          removeFile(file.name);
+          col.remove();
+        });
+
+        fileInfo.appendChild(fileName);
+        fileInfo.appendChild(fileSize);
+
+        previewItem.appendChild(img);
+        previewItem.appendChild(fileInfo);
+        previewItem.appendChild(removeBtn);
+
+        col.appendChild(previewItem);
+        previewList.appendChild(col);
+      };
+
+      reader.readAsDataURL(file);
+    }
+
+    // 移除文件
+    function removeFile(filename) {
+      selectedFiles = selectedFiles.filter(file => file.name !== filename);
+      updateUI();
+    }
+
+    // 更新UI状态
+    function updateUI() {
+      if (selectedFiles.length > 0) {
+        previewContainer.style.display = 'block';
+        uploadButton.disabled = false;
+        fileCount.textContent = selectedFiles.length;
       } else {
-        // 处理错误
-        alert('上传失败！请重试。');
+        previewContainer.style.display = 'none';
+        uploadButton.disabled = true;
+        fileCount.textContent = '0';
+      }
+    }
+
+    // 格式化文件大小
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' bytes';
+      else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+      else return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    // 处理文件上传
+    uploadButton.addEventListener('click', uploadFiles);
+
+    function uploadFiles() {
+      if (selectedFiles.length === 0) return;
+
+      const formData = new FormData();
+      selectedFiles.forEach(file => {
+        formData.append('images[]', file);
+      });
+
+      // 显示进度条
+      uploadProgress.style.display = 'block';
+      uploadButton.disabled = true;
+      progressBar.style.width = '0%';
+      progressBar.textContent = '';
+
+      // 发送请求
+      const xhr = new XMLHttpRequest();
+      const action = form.getAttribute('action');
+      xhr.open('POST', action, true);
+
+      // 监听上传进度
+      xhr.upload.addEventListener('progress', function (e) {
+        if (e.lengthComputable) {
+          const percentComplete = (e.loaded / e.total) * 100;
+          progressBar.style.width = percentComplete + '%';
+          progressBar.textContent = Math.round(percentComplete) + '%';
+        }
+      });
+
+      // 处理上传完成
+      xhr.onload = function () {
+        if (xhr.status === 200) {
+          // 成功上传，刷新页面显示结果
+          window.location.reload();
+        } else {
+          // 处理错误
+          alert('上传失败！请重试。');
+          uploadButton.disabled = false;
+          uploadProgress.style.display = 'none';
+        }
+      };
+
+      // 处理上传错误
+      xhr.onerror = function () {
+        alert('上传错误！请检查网络连接。');
         uploadButton.disabled = false;
         uploadProgress.style.display = 'none';
-      }
-    };
-    
-    // 处理上传错误
-    xhr.onerror = function() {
-      alert('上传错误！请检查网络连接。');
-      uploadButton.disabled = false;
-      uploadProgress.style.display = 'none';
-    };
-    
-    // 发送请求
-    xhr.send(formData);
-  }
-  
-  // 点击整个拖放区域触发文件选择
-  dropzone.addEventListener('click', function(e) {
-    // 防止点击label按钮时重复触发
-    if (e.target !== fileInput && !e.target.closest('label')) {
-      fileInput.click();
+      };
+
+      // 发送请求
+      xhr.send(formData);
     }
+
+    // 点击整个拖放区域触发文件选择
+    dropzone.addEventListener('click', function (e) {
+      // 防止点击label按钮时重复触发
+      if (e.target !== fileInput && !e.target.closest('label')) {
+        fileInput.click();
+      }
+    });
   });
-});
 </script>
 {% endblock %}

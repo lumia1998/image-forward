@@ -12,30 +12,36 @@
 <div class="container">
     <div class="row mb-4">
         <div class="col">
-                </div>
+        </div>
     </div>
 
     {% if collections %}
-    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4"> {# 调整了列数以适应文件夹样式 #}
+    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3"> {# 减少列数让卡片更大，减小间距 #}
         {% for collection in collections %}
         <div class="col">
-            <a href="{{ url_for('main.view_collection', collection_name=collection.name) }}" class="text-decoration-none">
-                <div class="card h-100 text-center folder-card"> {# 添加 folder-card 类用于自定义样式 #}
-                    <div class="card-body d-flex flex-column justify-content-center align-items-center">
-                        {# 文件夹图标和封面 - 这里使用 Bootstrap Icon 作为例子 #}
-                        <div class="folder-icon-wrapper mb-2">
-                            {% if collection.cover_url %}
-                            <img src="{{ collection.cover_url }}" alt="{{ collection.name }} cover" class="folder-cover-img">
+            <a href="{{ url_for('main.view_collection', collection_name=collection.name) }}"
+                class="text-decoration-none">
+                <div class="card h-100 folder-card">
+                    <div class="card-body">
+                        {# 大封面图片区域 #}
+                        <div class="folder-icon-wrapper">
+                            {% if collection.has_content %}
+                            <img src="{{ url_for('redirect.random_redirect', collection_name=collection.name) }}?t={{ range(1, 999999) | random }}"
+                                alt="{{ collection.name }} cover" class="folder-cover-img cover-refresh"
+                                data-api-url="{{ url_for('redirect.random_redirect', collection_name=collection.name) }}"
+                                title="👆点击图片可刷新预览">
                             {% else %}
-                            {# 可以放一个默认的空文件夹SVG或图标库的图标 #}
-                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-folder-fill text-secondary" viewBox="0 0 16 16">
-                                <path d="M9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.826a2 2 0 0 1-1.991-1.819l-.637-7a1.99 1.99 0 0 1 .342-1.31L.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3zm-8.322.12C1.72 3.042 1.95 3 2.19 3h5.396l-.707-.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981l.006.139z"/>
+                            {# 空合集显示默认文件夹图标 #}
+                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor"
+                                class="bi bi-folder-fill" viewBox="0 0 16 16">
+                                <path
+                                    d="M9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.826a2 2 0 0 1-1.991-1.819l-.637-7a1.99 1.99 0 0 1 .342-1.31L.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3zm-8.322.12C1.72 3.042 1.95 3 2.19 3h5.396l-.707-.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981l.006.139z" />
                             </svg>
                             {% endif %}
+                            {# 右下角悬浮标签显示合集名称 #}
+                            <span class="card-label">{{ collection.name }}</span>
                         </div>
-                        <h5 class="card-title fs-6 mb-0 text-truncate w-100" title="{{ collection.name }}">{{ collection.name }}</h5>
                     </div>
-                    {# 可以移除 card-footer 或重新设计 #}
                 </div>
             </a>
         </div>
@@ -47,4 +53,22 @@
     </div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+<script>
+    // 点击封面图片刷新显示新的随机图片
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.cover-refresh').forEach(function (img) {
+            img.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                // 通过添加时间戳参数强制刷新图片
+                const apiUrl = this.getAttribute('data-api-url');
+                this.src = apiUrl + '?t=' + Date.now();
+            });
+        });
+    });
+</script>
 {% endblock %}
