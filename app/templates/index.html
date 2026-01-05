@@ -10,40 +10,7 @@
         padding-bottom: 4rem;
     }
 
-    /* Hero Section */
-    .hero-section {
-        position: relative;
-        padding: 1.5rem 2rem;
-        margin-bottom: 1.5rem;
-        background: rgba(255, 255, 255, 0.6);
-        backdrop-filter: blur(16px);
-        border-radius: 1rem;
-        margin-top: 1rem;
-    }
 
-    .hero-header {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        position: relative;
-    }
-
-    .hero-title {
-        font-size: 1.75rem;
-        margin: 0;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        font-weight: 700;
-    }
-
-    .hero-admin-btn {
-        position: absolute;
-        right: 0;
-        top: 50%;
-        transform: translateY(-50%);
-    }
 
     /* Admin Button */
     .btn-admin {
@@ -298,11 +265,7 @@
 
 {% block content %}
 <div class="container">
-    <div class="hero-section">
-        <div class="hero-header">
-            <h1 class="hero-title"></h1>
-        </div>
-    </div>
+
 
     <!-- LLM 提示词生成卡片 (可折叠) -->
     <div class="collapsible-card">
