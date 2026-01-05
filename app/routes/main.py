@@ -56,7 +56,7 @@ def homepage_data():
     for name in collections:
         info = storage_manager.get_collection_info(name)
         if info and info.get('has_content'):
-            path_functions.append(f"本地图片合集-{name}:/{name}")
+            path_functions.append(f"{name}:/{name}")
     
     llm_prompt = f"""    picture_url: |
     {{ 
