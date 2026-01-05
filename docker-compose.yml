@@ -6,13 +6,15 @@ services:
     container_name: image_forward_app
     ports:
       - "46000:46000"
+    environment:
+      - PICTURE_DIR=/app/picture
     env_file:
       - .env
     volumes:
       # 图片存储目录
       - ./picture:/app/picture
-      # 背景图片目录
-      - ./background:/app/background
+      # 背景图片目录 (代码中是基于 app 目录的相对路径)
+      - ./app/background:/app/app/background
       # API 端点配置文件
       - ./config.json:/app/config.json
     restart: unless-stopped
