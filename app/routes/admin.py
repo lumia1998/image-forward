@@ -1,10 +1,11 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, current_app, send_from_directory
+from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, current_app, send_from_directory, jsonify
 from app.storage import storage_manager
 from app.auth.auth import login, logout, login_required
-# from dotenv import find_dotenv, set_key # Removed
+from app.database import get_all_api_endpoints, add_api_endpoint, update_api_endpoint, delete_api_endpoint
 from werkzeug.utils import secure_filename
 import os
 import threading
+import re
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -383,3 +384,106 @@ def serve_picture(filename):
             base_dir = picture_base_dir
         # current_app.logger.debug(f"Serving COLLECTION image: {filename} from base_dir: {base_dir}")
         return send_from_directory(os.path.abspath(base_dir), filename, as_attachment=False)
+
+# =====================
+# API 端点管理路由
+# =====================
+
+@admin_bp.route('/api-endpoints')
+@login_required
+def api_endpoints():
+    """API 端点管理页面"""
+    endpoints = get_all_api_endpoints()
+    background_image_filename = current_app.config.get('BACKGROUND_IMAGE_PATH')
+    background_opacity = current_app.config.get('BACKGROUND_OPACITY')
+    return render_template('api_endpoints.html',
+                           endpoints=endpoints,
+                           background_image_filename=background_image_filename,
+                           background_opacity=background_opacity)
+
+@admin_bp.route('/api-endpoints/create', methods=['POST'])
+@login_required
+def create_api_endpoint():
+    """创建新的 API 端点"""
+    name = request.form.get('name', '').strip()
+    description = request.form.get('description', '').strip()
+    url = request.form.get('url', '').strip()
+    method = request.form.get('method', 'redirect').strip()
+    group = request.form.get('group', '默认分组').strip()
+    
+    # 验证端点名称
+    if not name:
+        flash('端点名称不能为空！', 'danger')
+        return redirect(url_for('admin.api_endpoints'))
+    
+    # 只允许字母、数字、下划线和连字符
+    if not re.match(r'^[a-zA-Z0-9_-]+$', name):
+        flash('端点名称只能包含字母、数字、下划线和连字符！', 'danger')
+        return redirect(url_for('admin.api_endpoints'))
+    
+    if not url:
+        flash('目标 URL 不能为空！', 'danger')
+        return redirect(url_for('admin.api_endpoints'))
+    
+    endpoint_config = {
+        'group': group or '默认分组',
+        'description': description,
+        'url': url,
+        'method': method,
+        'type': 'image',
+        'queryParams': [],
+        'proxySettings': {
+            'fallbackAction': 'returnJson'
+        }
+    }
+    
+    if add_api_endpoint(name, endpoint_config):
+        flash(f'API 端点 "{name}" 创建成功！', 'success')
+    else:
+        flash(f'API 端点 "{name}" 已存在！', 'warning')
+    
+    return redirect(url_for('admin.api_endpoints'))
+
+@admin_bp.route('/api-endpoints/<name>/update', methods=['POST'])
+@login_required
+def update_api_endpoint_route(name):
+    """更新 API 端点"""
+    description = request.form.get('description', '').strip()
+    url = request.form.get('url', '').strip()
+    method = request.form.get('method', 'redirect').strip()
+    group = request.form.get('group', '默认分组').strip()
+    
+    if not url:
+        flash('目标 URL 不能为空！', 'danger')
+        return redirect(url_for('admin.api_endpoints'))
+    
+    endpoint_config = {
+        'group': group or '默认分组',
+        'description': description,
+        'url': url,
+        'method': method,
+        'type': 'image',
+        'queryParams': [],
+        'proxySettings': {
+            'fallbackAction': 'returnJson'
+        }
+    }
+    
+    if update_api_endpoint(name, endpoint_config):
+        flash(f'API 端点 "{name}" 更新成功！', 'success')
+    else:
+        flash(f'更新 API 端点 "{name}" 失败！端点可能不存在。', 'danger')
+    
+    return redirect(url_for('admin.api_endpoints'))
+
+@admin_bp.route('/api-endpoints/<name>/delete', methods=['POST'])
+@login_required
+def delete_api_endpoint_route(name):
+    """删除 API 端点"""
+    if delete_api_endpoint(name):
+        flash(f'API 端点 "{name}" 删除成功！', 'success')
+    else:
+        flash(f'删除 API 端点 "{name}" 失败！', 'danger')
+    
+    return redirect(url_for('admin.api_endpoints'))
+

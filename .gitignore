@@ -27,6 +27,8 @@ ENV/
 # 上传的图片文件
 picture/*
 !picture/.gitkeep
+app/picture/*
+!app/picture/.gitkeep
 
 # 本地配置
 .env

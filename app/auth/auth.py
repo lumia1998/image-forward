@@ -13,7 +13,7 @@ def init_auth(app):
         # 只对管理路由进行认证检查
         if request.path.startswith('/admin') and not request.path.endswith('/login'):
             if not is_authenticated():
-                return redirect(url_for('admin.login'))
+                return redirect(url_for('admin.login_page'))
 
 def login(password):
     """用户登录
@@ -56,6 +56,6 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not is_authenticated():
-            return redirect(url_for('admin.login'))
+            return redirect(url_for('admin.login_page'))
         return f(*args, **kwargs)
     return decorated_function

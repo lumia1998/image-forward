@@ -42,6 +42,34 @@ class StorageManager:
                 collections.append(item)
         return collections
     
+    def get_collection_info(self, collection_name):
+        """获取合集信息
+        
+        Args:
+            collection_name: 合集名称
+        
+        Returns:
+            dict: 包含合集信息的字典，如 {has_content, cover, total_count}
+        """
+        if not self.collection_exists(collection_name):
+            return None
+        
+        images = self.get_collection_images(collection_name)
+        links = self.get_collection_links(collection_name)
+        
+        has_content = len(images) > 0 or len(links) > 0
+        cover = self.get_collection_cover_image_filename(collection_name) if has_content else None
+        total_count = len(images) + len(links)
+        
+        return {
+            'has_content': has_content,
+            'cover': cover,
+            'total_count': total_count,
+            'local_count': len(images),
+            'link_count': len(links)
+        }
+
+    
     def create_collection(self, collection_name):
         """创建新的图片合集
         

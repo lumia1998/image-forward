@@ -18,11 +18,17 @@
             <form method="post" action="{{ url_for('admin.create_collection') }}" class="mb-3">
                 <div class="mb-3">
                     <label for="collection_name" class="form-label">合集名称</label>
-                    <input type="text" class="form-control" id="collection_name" name="collection_name" required placeholder="输入合集名称">
+                    <input type="text" class="form-control" id="collection_name" name="collection_name" required
+                        placeholder="输入合集名称">
                     <div class="form-text">只能包含字母、数字和下划线</div>
                 </div>
                 <button type="submit" class="btn btn-primary w-100">创建合集</button>
             </form>
+
+            <!-- API 端点管理入口 -->
+            <a href="{{ url_for('admin.api_endpoints') }}" class="btn btn-outline-primary w-100 mb-3">
+                <i class="bi bi-link-45deg"></i> API 端点管理
+            </a>
 
             <!-- 使用说明 (从右侧移动过来) -->
             <div class="card mt-4">
@@ -52,7 +58,8 @@
             </div>
 
             <!-- 个性化设置卡片 (从主内容区移动过来) -->
-            <div class="card mt-4"> {# Adjusted margin for sidebar context, mb-4 removed as it will be the last item or followed by sidebar end #}
+            <div class="card mt-4"> {# Adjusted margin for sidebar context, mb-4 removed as it will be the last item or
+                followed by sidebar end #}
                 <div class="card-header">
                     <h5 class="mb-0">个性化设置</h5>
                 </div>
@@ -62,7 +69,8 @@
                         <!-- 应用名称 -->
                         <div class="mb-3">
                             <label for="app_name" class="form-label">应用名称</label>
-                            <input type="text" class="form-control" id="app_name" name="app_name" value="{{ config.get('APP_NAME', '我的图床管理界面') }}">
+                            <input type="text" class="form-control" id="app_name" name="app_name"
+                                value="{{ config.get('APP_NAME', '我的图床管理界面') }}">
                             <div class="form-text">修改后，部分地方可能需要刷新或重启应用才能完全生效。</div>
                         </div>
                         <hr>
@@ -70,10 +78,14 @@
                         <!-- 全局背景图片 -->
                         <div class="mb-3">
                             <label for="background_image" class="form-label">全局背景图片 (16:9 推荐)</label>
-                            <input type="file" class="form-control" id="background_image" name="background_image" accept="image/jpeg,image/png,image/gif,image/webp">
-                            <div class="form-text">当前: {{ config.get('BACKGROUND_IMAGE_PATH', 'default_background.jpg') }}. 上传新图片将覆盖旧图片（仅当前会话有效）。</div>
-                            {% if config.get('BACKGROUND_IMAGE_PATH') and config.get('BACKGROUND_IMAGE_PATH') != 'default_background.jpg' %}
-                                <img src="{{ url_for('main.serve_project_background', filename=config.get('BACKGROUND_IMAGE_PATH')) }}" alt="当前背景预览" class="img-thumbnail mt-2" style="max-width: 200px; max-height: 112px;">
+                            <input type="file" class="form-control" id="background_image" name="background_image"
+                                accept="image/jpeg,image/png,image/gif,image/webp">
+                            <div class="form-text">当前: {{ config.get('BACKGROUND_IMAGE_PATH', 'default_background.jpg')
+                                }}. 上传新图片将覆盖旧图片（仅当前会话有效）。</div>
+                            {% if config.get('BACKGROUND_IMAGE_PATH') and config.get('BACKGROUND_IMAGE_PATH') !=
+                            'default_background.jpg' %}
+                            <img src="{{ url_for('main.serve_project_background', filename=config.get('BACKGROUND_IMAGE_PATH')) }}"
+                                alt="当前背景预览" class="img-thumbnail mt-2" style="max-width: 200px; max-height: 112px;">
                             {% endif %}
                         </div>
                         <hr>
@@ -82,13 +94,17 @@
                         <div class="mb-3">
                             <label for="background_opacity" class="form-label">背景透明度</label>
                             <div class="d-flex align-items-center">
-                                <input type="range" class="form-range me-2" id="background_opacity" name="background_opacity" min="0.1" max="1" step="0.05" value="{{ config.get('BACKGROUND_OPACITY', 1.0) }}">
-                                <span id="opacity_value" class="badge bg-secondary" style="min-width: 40px;">{{ "%.2f"|format(config.get('BACKGROUND_OPACITY', 1.0)) }}</span>
+                                <input type="range" class="form-range me-2" id="background_opacity"
+                                    name="background_opacity" min="0.1" max="1" step="0.05"
+                                    value="{{ config.get('BACKGROUND_OPACITY', 1.0) }}">
+                                <span id="opacity_value" class="badge bg-secondary" style="min-width: 40px;">{{
+                                    "%.2f"|format(config.get('BACKGROUND_OPACITY', 1.0)) }}</span>
                             </div>
                             <div class="form-text">范围 0.1 (更透明) 到 1.0 (不透明)。实际效果依赖于Windows 11风格的具体实现。</div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary w-100">保存设置</button> {# Added w-100 for better fit in sidebar #}
+                        <button type="submit" class="btn btn-primary w-100">保存设置</button> {# Added w-100 for better fit
+                        in sidebar #}
                     </form>
                 </div>
             </div>
@@ -96,7 +112,7 @@
 
         <!-- 主内容区 -->
         <div class="col-md-9 col-lg-10 py-3">
-                    <h1>{{ config.APP_NAME }}</h1>
+            <h1>{{ config.APP_NAME }}</h1>
 
             <!-- 个性化设置卡片已移至侧边栏 -->
 
@@ -107,9 +123,12 @@
                 {% for collection_name in collections %}
                 <div class="col">
                     <div class="card h-100 folder-card text-center shadow-sm">
-                        <a href="{{ url_for('admin.manage_collection', collection_name=collection_name) }}" class="text-decoration-none text-dark stretched-link d-flex flex-column justify-content-center align-items-center p-3 admin-folder-card-link acrylic-effect" style="min-height: 120px;">
+                        <a href="{{ url_for('admin.manage_collection', collection_name=collection_name) }}"
+                            class="text-decoration-none text-dark stretched-link d-flex flex-column justify-content-center align-items-center p-3 admin-folder-card-link acrylic-effect"
+                            style="min-height: 120px;">
                             <i class="bi bi-folder2-open" style="font-size: 2.5rem; color: #0d6efd;"></i>
-                            <h6 class="card-title mt-2 mb-0 text-truncate" title="{{ collection_name }}">{{ collection_name }}</h6>
+                            <h6 class="card-title mt-2 mb-0 text-truncate" title="{{ collection_name }}">{{
+                                collection_name }}</h6>
                         </a>
                     </div>
                 </div>
@@ -129,17 +148,17 @@
 {% block extra_js %}
 {{ super() }}
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const opacitySlider = document.getElementById('background_opacity');
-    const opacityValueSpan = document.getElementById('opacity_value');
-    if (opacitySlider && opacityValueSpan) {
-        // Set initial value display correctly formatted
-        opacityValueSpan.textContent = parseFloat(opacitySlider.value).toFixed(2);
+    document.addEventListener('DOMContentLoaded', function () {
+        const opacitySlider = document.getElementById('background_opacity');
+        const opacityValueSpan = document.getElementById('opacity_value');
+        if (opacitySlider && opacityValueSpan) {
+            // Set initial value display correctly formatted
+            opacityValueSpan.textContent = parseFloat(opacitySlider.value).toFixed(2);
 
-        opacitySlider.oninput = function() {
-            opacityValueSpan.textContent = parseFloat(this.value).toFixed(2);
+            opacitySlider.oninput = function () {
+                opacityValueSpan.textContent = parseFloat(this.value).toFixed(2);
+            }
         }
-    }
-});
+    });
 </script>
 {% endblock %}

@@ -1,12 +1,15 @@
-from flask import Blueprint, send_file, redirect, abort, current_app, request, jsonify
-from app.storage import storage_manager
-from app.database import get_current_config
-import os
+"""
+API 转发路由模块
+处理 302 重定向和代理请求
+"""
+from flask import Blueprint, redirect, jsonify, request, abort
 import requests
 import re
 from urllib.parse import urlencode, quote
+from app.database import get_current_config
+from app.storage import storage_manager
 
-redirect_bp = Blueprint('redirect', __name__)
+forward_bp = Blueprint('forward', __name__)
 
 # 系统保留路径
 RESERVED_PATHS = {'config', 'admin', 'admin-login', 'admin-logout', 'api', 
@@ -68,9 +71,45 @@ def handle_proxy_request(target_url, proxy_settings):
         print(f'[Proxy] Failed: {str(e)}')
         return jsonify({'error': 'Proxy setup failed'}), 500
 
-def handle_api_forward(name, config_entry, config):
-    """处理 API 转发请求"""
-    print(f'[Router] Handling API /{name}')
+def is_api_endpoint(path):
+    """检查路径是否为配置的 API 端点"""
+    config = get_current_config()
+    return path in config.get('apiUrls', {})
+
+def is_collection(path):
+    """检查路径是否为图片合集"""
+    return storage_manager.collection_exists(path)
+
+@forward_bp.route('/<path:api_key>')
+def forward_request(api_key):
+    """动态 API 转发路由"""
+    print(f'[Forward Debug] Received request for: /{api_key}')
+    
+    # 跳过静态文件和系统路由
+    if '.' in api_key or api_key == 'favicon.ico' or api_key in RESERVED_PATHS:
+        print(f'[Forward Debug] Skipping reserved path: {api_key}')
+        abort(404)
+    
+    # 检查是否是 API 端点
+    config = get_current_config()
+    print(f'[Forward Debug] Config loaded, apiUrls keys: {list(config.get("apiUrls", {}).keys())}')
+    
+    config_entry = config.get('apiUrls', {}).get(api_key)
+    print(f'[Forward Debug] Config entry for {api_key}: {config_entry}')
+    
+    # 如果不是 API 端点但是图片合集，跳过让 redirect_bp 处理
+    if not config_entry:
+        if is_collection(api_key):
+            print(f'[Forward Debug] {api_key} is a collection, passing to redirect_bp')
+            abort(404)  # 让其他路由处理
+        print(f'[Forward Debug] {api_key} not found in config')
+        abort(404)
+    
+    if not config_entry.get('method'):
+        print(f'[Forward Debug] {api_key} has no method defined')
+        abort(404)
+    
+    print(f'[Router] Handling /{api_key}')
     
     # 处理特殊 URL 构造
     url_construction = config_entry.get('urlConstruction')
@@ -106,19 +145,19 @@ def handle_api_forward(name, config_entry, config):
     errors = []
     
     for param in config_entry.get('queryParams', []):
-        param_name = param.get('name')
-        value = request.args.get(param_name)
+        name = param.get('name')
+        value = request.args.get(name)
         
         if value is not None:
             valid_values = param.get('validValues')
             if valid_values and value not in valid_values:
-                errors.append(f"Invalid value for '{param_name}'")
+                errors.append(f"Invalid value for '{name}'")
             else:
-                validated_params[param_name] = value
+                validated_params[name] = value
         elif param.get('required'):
-            errors.append(f"Missing required parameter: {param_name}")
+            errors.append(f"Missing required parameter: {name}")
         elif param.get('defaultValue') is not None:
-            validated_params[param_name] = param['defaultValue']
+            validated_params[name] = param['defaultValue']
     
     if errors:
         return jsonify({'error': 'Invalid parameters', 'details': errors}), 400
@@ -140,61 +179,3 @@ def handle_api_forward(name, config_entry, config):
     
     # 默认重定向
     return redirect(target_url)
-
-@redirect_bp.route('/<name>')
-def dynamic_route(name):
-    """统一动态路由：处理 API 转发和图片合集
-    
-    优先级：
-    1. 系统保留路径 -> 404
-    2. 静态文件 -> 404
-    3. API 端点 -> 转发处理
-    4. 图片合集 -> 随机返回图片
-    5. 都不是 -> 404
-    """
-    # 跳过系统保留路径
-    if name in RESERVED_PATHS or '.' in name or name == 'favicon.ico':
-        abort(404)
-    
-    # 获取配置
-    config = get_current_config()
-    config_entry = config.get('apiUrls', {}).get(name)
-    
-    # 优先检查 API 端点
-    if config_entry and config_entry.get('method'):
-        return handle_api_forward(name, config_entry, config)
-    
-    # 检查是否是图片合集
-    if storage_manager.collection_exists(name):
-        return handle_collection_redirect(name)
-    
-    # 都不匹配
-    abort(404)
-
-def handle_collection_redirect(collection_name):
-    """处理图片合集随机重定向"""
-    # 从合集中随机获取一个资源
-    resource_type, resource_path = storage_manager.get_random_resource(collection_name)
-    
-    if not resource_type or not resource_path:
-        abort(404, description=f"合集 '{collection_name}' 中没有可用的资源")
-    
-    # 根据资源类型处理请求
-    if resource_type == 'local':
-        # 检查文件是否存在，提供更清晰的错误信息
-        if not os.path.exists(resource_path):
-            current_app.logger.error(f"文件不存在: {resource_path}")
-            abort(404, description=f"图片文件不存在: {os.path.basename(resource_path)}")
-        
-        # 本地图片：直接返回文件
-        try:
-            return send_file(resource_path)
-        except Exception as e:
-            current_app.logger.error(f"发送文件错误: {str(e)}")
-            abort(500, description=f"无法加载图片: {os.path.basename(resource_path)}")
-    elif resource_type == 'external':
-        # 外部链接：通过HTTP重定向
-        return redirect(resource_path)
-    else:
-        # 未知资源类型
-        abort(500, description="系统错误：未知的资源类型")

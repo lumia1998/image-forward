@@ -12,6 +12,10 @@ def create_app():
     # 确保图片目录存在
     os.makedirs(Config.PICTURE_DIR, exist_ok=True)
     
+    # 初始化配置模块（JSON 存储）
+    from app.database import init_db
+    init_db(app)
+    
     # 初始化认证模块
     from app.auth import init_auth
     init_auth(app)
@@ -23,6 +27,8 @@ def create_app():
     
     app.register_blueprint(main_bp)
     app.register_blueprint(admin_bp)
+    # redirect_bp 已合并处理 API 转发和图片合集
     app.register_blueprint(redirect_bp)
     
     return app
+

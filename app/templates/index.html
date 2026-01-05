@@ -1,74 +1,436 @@
 {% extends "base.html" %}
 
-{% block title %}图床转发 - 首页{% endblock %}
+{% block title %}图片转发服务{% endblock %}
 
 {% block extra_css %}
 {{ super() }}
-{# Removed custom body background styles. Base.html now handles global background. #}
-{# Index page will inherit background_image_filename and background_opacity from the view context, #}
-{# and base.html will use them. #}
+<style>
+    body {
+        padding-top: 0;
+        padding-bottom: 4rem;
+    }
+
+    /* Hero Section */
+    .hero-section {
+        position: relative;
+        padding: 1.5rem 2rem;
+        margin-bottom: 1.5rem;
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(16px);
+        border-radius: 1rem;
+        margin-top: 1rem;
+    }
+
+    .hero-header {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+    }
+
+    .hero-title {
+        font-size: 1.75rem;
+        margin: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: 700;
+    }
+
+    .hero-admin-btn {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    /* Admin Button */
+    .btn-admin {
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(8px);
+        border: 1.5px solid #667eea;
+        color: #667eea;
+        border-radius: 1.5rem;
+        padding: 0.4rem 1rem;
+        font-weight: 500;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .btn-admin:hover {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #fff;
+        border-color: transparent;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        transform: translateY(-2px);
+    }
+
+    /* Collapsible Card */
+    .collapsible-card {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 1rem;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+
+    .collapsible-card .card-header {
+        cursor: pointer;
+        transition: background 0.2s;
+        padding: 1rem 1.25rem;
+        background: transparent;
+        border-bottom: none;
+    }
+
+    .collapsible-card .card-header:hover {
+        background: rgba(255, 255, 255, 0.5);
+    }
+
+    .collapse-icon {
+        transition: transform 0.3s ease;
+        font-size: 0.75rem;
+        color: #6c757d;
+        width: 1.25rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .collapsible-card.expanded .collapse-icon {
+        transform: rotate(90deg);
+    }
+
+    .llm-prompt-body {
+        transition: all 0.3s ease;
+    }
+
+    .llm-header-icon {
+        width: 2rem;
+        height: 2rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 0.5rem;
+        color: #fff;
+        font-size: 1rem;
+    }
+
+    .llm-header-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0;
+        color: #212529;
+    }
+
+    /* API Cards Grid */
+    .api-cards-grid {
+        margin-top: 2rem;
+    }
+
+    .group-section {
+        margin-bottom: 2rem;
+    }
+
+    .group-title-home {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #212529;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+    }
+
+    .cards-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .api-card {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(16px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .api-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 20px 40px -10px rgba(102, 126, 234, 0.25);
+    }
+
+    .api-card-image {
+        position: relative;
+        height: 200px;
+        overflow: hidden;
+        cursor: pointer;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .api-card-image img,
+    .api-card-image video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s, opacity 0.3s;
+    }
+
+    .api-card-image:hover img,
+    .api-card-image:hover video {
+        transform: scale(1.05);
+    }
+
+    .image-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .api-card-image:hover .image-overlay {
+        opacity: 1;
+    }
+
+    .refresh-hint {
+        color: #fff;
+        font-size: 0.875rem;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 0.5rem;
+        backdrop-filter: blur(4px);
+    }
+
+    .api-badge {
+        position: absolute;
+        bottom: 0.75rem;
+        right: 0.75rem;
+        background: rgba(255, 215, 0, 0.9);
+        backdrop-filter: blur(4px);
+        color: #000;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+
+    .api-card-info {
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.5);
+    }
+
+    .api-hint {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+    }
+
+    .api-url {
+        font-size: 0.8rem;
+        color: #667eea;
+        word-break: break-all;
+        margin: 0;
+    }
+
+    .api-url:hover {
+        text-decoration: underline;
+    }
+
+    /* Loading Spinner */
+    .media-loader {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #fff;
+        font-size: 0.875rem;
+        z-index: 1;
+    }
+
+    .media-loader.hidden {
+        display: none;
+    }
+
+    .loader-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 0.5rem;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    #loading-indicator {
+        text-align: center;
+        padding: 3rem;
+    }
+</style>
 {% endblock %}
+
 {% block content %}
 <div class="container">
-    <div class="row mb-4">
-        <div class="col">
+    <div class="hero-section">
+        <div class="hero-header">
+            <h1 class="hero-title">图片转发服务</h1>
         </div>
     </div>
 
-    {% if collections %}
-    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3"> {# 减少列数让卡片更大，减小间距 #}
-        {% for collection in collections %}
-        <div class="col">
-            <a href="{{ url_for('main.view_collection', collection_name=collection.name) }}"
-                class="text-decoration-none">
-                <div class="card h-100 folder-card">
-                    <div class="card-body">
-                        {# 大封面图片区域 #}
-                        <div class="folder-icon-wrapper">
-                            {% if collection.has_content %}
-                            <img src="{{ url_for('redirect.random_redirect', collection_name=collection.name) }}?t={{ range(1, 999999) | random }}"
-                                alt="{{ collection.name }} cover" class="folder-cover-img cover-refresh"
-                                data-api-url="{{ url_for('redirect.random_redirect', collection_name=collection.name) }}"
-                                title="👆点击图片可刷新预览">
-                            {% else %}
-                            {# 空合集显示默认文件夹图标 #}
-                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor"
-                                class="bi bi-folder-fill" viewBox="0 0 16 16">
-                                <path
-                                    d="M9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.826a2 2 0 0 1-1.991-1.819l-.637-7a1.99 1.99 0 0 1 .342-1.31L.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3zm-8.322.12C1.72 3.042 1.95 3 2.19 3h5.396l-.707-.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981l.006.139z" />
-                            </svg>
-                            {% endif %}
-                            {# 右下角悬浮标签显示合集名称 #}
-                            <span class="card-label">{{ collection.name }}</span>
-                        </div>
-                    </div>
-                </div>
-            </a>
+    <!-- LLM 提示词生成卡片 (可折叠) -->
+    <div class="collapsible-card">
+        <div class="card-header d-flex align-items-center flex-nowrap" onclick="toggleLLMPrompt(this)">
+            <div class="d-flex align-items-center gap-2 flex-nowrap" style="overflow: hidden;">
+                <i class="bi bi-chevron-right collapse-icon"></i>
+                <span class="llm-header-icon flex-shrink-0"><i class="bi bi-cpu"></i></span>
+                <span class="llm-header-title text-truncate">LLM 提示词集成指南</span>
+            </div>
         </div>
-        {% endfor %}
+        <div class="llm-prompt-body" style="display: none; padding: 0;">
+            <div style="position: relative;">
+                <button id="copy-prompt-btn" class="btn btn-sm"
+                    style="position: absolute; top: 0.5rem; right: 0.5rem; padding: 0.25rem 0.5rem; background: rgba(0,0,0,0.05); border: 1px solid #ddd; border-radius: 4px; color: #666; z-index: 10;"
+                    title="复制"><i class="bi bi-clipboard"></i></button>
+                <pre id="llm-prompt" class="m-0 rounded-bottom"
+                    style="white-space: pre-wrap; word-break: break-word; font-size: 0.875rem; background: #fff; color: #333; border-top: 1px solid rgba(0,0,0,0.1); padding: 1rem 2.5rem 2rem 1rem;">正在加载...</pre>
+            </div>
+        </div>
     </div>
-    {% else %}
-    <div class="alert alert-info">
-        <p>还没有创建任何图片合集。请前往<a href="{{ url_for('admin.login_page') }}">管理页面</a>创建一个合集。</p>
+
+    <!-- API 图片卡片展示 -->
+    <div id="api-cards-container">
+        <div id="loading-indicator">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">正在加载...</span>
+            </div>
+            <p class="mt-2">正在加载列表...</p>
+        </div>
     </div>
-    {% endif %}
 </div>
 {% endblock %}
 
 {% block extra_js %}
 {{ super() }}
 <script>
-    // 点击封面图片刷新显示新的随机图片
-    document.addEventListener('DOMContentLoaded', function () {
-        document.querySelectorAll('.cover-refresh').forEach(function (img) {
-            img.addEventListener('click', function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                // 通过添加时间戳参数强制刷新图片
-                const apiUrl = this.getAttribute('data-api-url');
-                this.src = apiUrl + '?t=' + Date.now();
-            });
+    // LLM 提示词卡片展开/收缩
+    function toggleLLMPrompt(header) {
+        const card = header.closest('.collapsible-card');
+        const body = card.querySelector('.llm-prompt-body');
+        const isExpanded = card.classList.contains('expanded');
+        body.style.display = isExpanded ? 'none' : 'block';
+        card.classList.toggle('expanded');
+    }
+
+    // 图片加载成功时隐藏 loader
+    function hideLoader(mediaElement) {
+        const loader = mediaElement.parentNode.querySelector('.media-loader');
+        if (loader) loader.classList.add('hidden');
+    }
+
+    // 处理图片加载错误，尝试切换为视频
+    function handleMediaError(imgElement, apiUrl) {
+        if (imgElement.dataset.hasError) return;
+        imgElement.dataset.hasError = 'true';
+        const parent = imgElement.parentNode;
+        const loader = parent.querySelector('.media-loader');
+
+        const video = document.createElement('video');
+        video.src = apiUrl + '?t=' + Date.now();
+        video.autoplay = true;
+        video.muted = true;
+        video.loop = true;
+        video.playsInline = true;
+        video.style.cssText = 'width:100%;height:100%;object-fit:cover';
+
+        video.onloadeddata = () => { if (loader) loader.classList.add('hidden'); };
+        parent.replaceChild(video, imgElement);
+
+        video.onerror = () => {
+            if (loader) loader.classList.add('hidden');
+            const errorImg = document.createElement('img');
+            errorImg.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150"><rect fill="%23f0f0f0" width="200" height="150"/><text fill="%23999" x="50%" y="50%" text-anchor="middle" dy=".3em">加载失败</text></svg>';
+            errorImg.style.cssText = 'width:100%;height:100%;object-fit:cover';
+            parent.replaceChild(errorImg, video);
+        };
+    }
+
+    // 点击刷新图片/视频
+    function refreshImage(container, apiUrl) {
+        const media = container.querySelector('img, video');
+        if (!media) return;
+        media.style.opacity = '0.5';
+        const newSrc = apiUrl + '?t=' + Date.now();
+
+        if (media.tagName === 'IMG') {
+            delete media.dataset.hasError;
+            const newImg = new Image();
+            newImg.onload = () => { media.src = newSrc; media.style.opacity = '1'; };
+            newImg.onerror = () => handleMediaError(media, apiUrl);
+            newImg.src = newSrc;
+        } else {
+            media.src = newSrc;
+            media.onloadeddata = () => { media.style.opacity = '1'; };
+        }
+    }
+
+    // 复制按钮功能
+    document.getElementById('copy-prompt-btn').addEventListener('click', () => {
+        const text = document.getElementById('llm-prompt').textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = document.getElementById('copy-prompt-btn');
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-check"></i> 已复制';
+            btn.style.background = '#28a745';
+            btn.style.color = '#fff';
+            setTimeout(() => { btn.innerHTML = original; btn.style.background = 'rgba(0,0,0,0.05)'; btn.style.color = '#666'; }, 2000);
         });
     });
+
+    // 加载并渲染首页数据
+    async function loadHomepageData() {
+        try {
+            const response = await fetch('/api/homepage-data');
+            const data = await response.json();
+
+            // 更新 LLM 提示词
+            document.getElementById('llm-prompt').textContent = data.llmPrompt;
+
+            // 渲染 API 卡片
+            const container = document.getElementById('api-cards-container');
+            container.innerHTML = '<div class="api-cards-grid">' + data.groupsHtml + '</div>';
+        } catch (error) {
+            console.error('加载数据失败:', error);
+            document.getElementById('api-cards-container').innerHTML = '<div class="alert alert-danger">加载列表失败</div>';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadHomepageData);
 </script>
 {% endblock %}

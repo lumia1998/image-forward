@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}{{ config.APP_NAME }} - API 端点管理{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- 侧边栏：添加端点表单 -->
+        <div class="col-md-3 col-lg-2 sidebar py-3">
+            <h5>添加新端点</h5>
+            <form method="post" action="{{ url_for('admin.create_api_endpoint') }}" class="mb-3">
+                <div class="mb-3">
+                    <label for="name" class="form-label">端点名称</label>
+                    <input type="text" class="form-control" id="name" name="name" required placeholder="例如: moe">
+                    <div class="form-text">只能包含字母、数字、下划线和连字符</div>
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">描述</label>
+                    <input type="text" class="form-control" id="description" name="description" placeholder="例如: 萌版横图">
+                </div>
+                <div class="mb-3">
+                    <label for="url" class="form-label">目标 URL</label>
+                    <input type="url" class="form-control" id="url" name="url" required
+                        placeholder="https://example.com/api">
+                </div>
+                <input type="hidden" name="method" value="redirect">
+                <div class="mb-3">
+                    <label for="group" class="form-label">分组</label>
+                    <input type="text" class="form-control" id="group" name="group" placeholder="默认分组">
+                </div>
+                <button type="submit" class="btn btn-primary w-100">添加端点</button>
+            </form>
+
+            <hr>
+            <a href="{{ url_for('admin.index') }}" class="btn btn-outline-secondary w-100">
+                <i class="bi bi-arrow-left"></i> 返回合集管理
+            </a>
+        </div>
+
+        <!-- 主内容区：端点列表 -->
+        <div class="col-md-9 col-lg-10 py-3">
+            <h1>API 端点管理</h1>
+            <p class="text-muted">管理 302 重定向 API 端点。通过 <code>http://域名/端点名称</code> 访问。</p>
+            <hr>
+
+            {% if endpoints %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>端点名称</th>
+                            <th>描述</th>
+                            <th>目标 URL</th>
+
+                            <th>分组</th>
+                            <th style="width: 180px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for name, endpoint_config in endpoints.items() %}
+                        <tr>
+                            <td>
+                                <a href="/{{ name }}" target="_blank" class="text-decoration-none">
+                                    <code>/{{ name }}</code>
+                                    <i class="bi bi-box-arrow-up-right small"></i>
+                                </a>
+                            </td>
+                            <td>{{ endpoint_config.description or '-' }}</td>
+                            <td class="text-truncate" style="max-width: 250px;" title="{{ endpoint_config.url }}">
+                                {{ endpoint_config.url }}
+                            </td>
+
+                            <td>{{ endpoint_config.group or '默认分组' }}</td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                                    data-bs-target="#editModal{{ loop.index }}">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <form method="post" action="{{ url_for('admin.delete_api_endpoint_route', name=name) }}"
+                                    class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 编辑模态框 -->
+            {% for name, endpoint_config in endpoints.items() %}
+            <div class="modal fade" id="editModal{{ loop.index }}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form method="post" action="{{ url_for('admin.update_api_endpoint_route', name=name) }}">
+                            <div class="modal-header">
+                                <h5 class="modal-title">编辑端点: {{ name }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label">描述</label>
+                                    <input type="text" class="form-control" name="description"
+                                        value="{{ endpoint_config.description }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">目标 URL</label>
+                                    <input type="url" class="form-control" name="url" value="{{ endpoint_config.url }}"
+                                        required>
+                                </div>
+                                <input type="hidden" name="method" value="redirect">
+                                <div class="mb-3">
+                                    <label class="form-label">分组</label>
+                                    <input type="text" class="form-control" name="group"
+                                        value="{{ endpoint_config.group }}">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                <button type="submit" class="btn btn-primary">保存更改</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            {% else %}
+            <div class="alert alert-light text-center py-4">
+                <i class="bi bi-link-45deg fs-1 text-muted"></i>
+                <p class="mt-2 mb-0">还没有配置任何 API 端点。</p>
+                <p class="text-muted small">在左侧添加第一个端点开始使用！</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
