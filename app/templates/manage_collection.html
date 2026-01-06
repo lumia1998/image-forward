@@ -125,7 +125,7 @@
       <h5 class="mt-4">文件重命名</h5>
       <form method="post" action="{{ url_for('admin.rename_long_filenames', collection_name=collection_name) }}"
         onsubmit="return confirm('将把所有文件名超过8个字符的图片重命名为数字序号，确定继续？');">
-        <button type="submit" class="btn btn-warning w-100">批量重命名长文件名</button>
+        <button type="submit" class="btn btn-primary w-100">批量重命名长文件名</button>
         <div class="form-text">文件名超过8字符的图片将被重命名为1、2、3...</div>
       </form>
     </div>
